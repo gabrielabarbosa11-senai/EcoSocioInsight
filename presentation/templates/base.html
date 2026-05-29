@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SocioEcoInsight — Painel analítico de métricas socioeconômicas do Brasil baseado nos dados do IBGE.">
+    <title>{% block title %}SocioEcoInsight{% endblock %} | Painel Analítico</title>
+
+    <!-- TailwindCSS CDN com configuração de dark mode e tema customizado -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50:  '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        },
+                        sidebar: {
+                            DEFAULT: '#0f172a',
+                            hover:   '#1e293b',
+                            active:  '#1e3a5f',
+                            border:  '#1e293b',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.2s ease-out',
+                        'slide-in': 'slideIn 0.25s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn:  { from: { opacity: '0' }, to: { opacity: '1' } },
+                        slideIn: { from: { transform: 'translateX(100%)' }, to: { transform: 'translateX(0)' } },
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+
+    <!-- Estilos globais -->
+    <style>
+        /* Scrollbar customizada */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+
+        /* HTMX indicators — ocultos por padrão, exibidos durante request */
+        .htmx-indicator { display: none !important; }
+        .htmx-request .htmx-indicator,
+        .htmx-request.htmx-indicator { display: flex !important; }
+
+        /* Sidebar collapsed state */
+        #sidebar.collapsed { width: 4rem; }
+        #sidebar.collapsed .sidebar-label,
+        #sidebar.collapsed .sidebar-logo-text,
+        #sidebar.collapsed .sidebar-section-title { display: none; }
+        #sidebar.collapsed .sidebar-nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+        #sidebar.collapsed .sidebar-icon { margin-right: 0; }
+
+        /* Transições suaves */
+        #sidebar { transition: width 0.25s cubic-bezier(0.4,0,0.2,1); }
+        #main-area { transition: margin-left 0.25s cubic-bezier(0.4,0,0.2,1); }
+
+        /* Skeleton loader */
+        .skeleton {
+            background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite;
+            border-radius: 0.5rem;
+        }
+        .dark .skeleton {
+            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+            background-size: 200% 100%;
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    </style>
+
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body class="h-full bg-slate-100 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-200 overflow-hidden">
+
+<!-- ═══════════════════════════════════════════
+     LAYOUT RAIZ: sidebar + área principal + chat
+     ═══════════════════════════════════════════ -->
+<div class="flex h-screen overflow-hidden" id="app-root">
+
+    <!-- ══════════════════════════════
+         SIDEBAR — Navegação lateral
+         ══════════════════════════════ -->
+    <aside id="sidebar"
+           class="w-64 bg-sidebar flex flex-col flex-shrink-0 overflow-hidden z-30
+                  border-r border-sidebar-border"
+           aria-label="Navegação principal">
+
+        <!-- Logo / Identidade -->
+        <div class="flex items-center gap-3 px-5 h-16 border-b border-white/5 flex-shrink-0">
+            <div class="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary-900/40">
+                <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.5l4-4 4 4 4-8 4 4"/>
+                </svg>
+            </div>
+            <div class="sidebar-logo-text leading-tight">
+                <span class="block text-white font-bold text-sm tracking-tight">SocioEco</span>
+                <span class="block text-slate-400 text-xs font-medium">Insight</span>
+            </div>
+        </div>
+
+        <!-- Navegação principal -->
+        <nav class="flex-1 overflow-y-auto py-4 px-2 space-y-0.5" role="navigation">
+
+            <p class="sidebar-section-title text-slate-500 text-[10px] font-semibold uppercase tracking-widest px-3 pt-2 pb-2">
+                Análise
+            </p>
+
+            <!-- Dashboard -->
+            <a href="{% url 'dashboard' %}"
+               id="nav-dashboard"
+               title="Visão geral das métricas socioeconômicas"
+               class="sidebar-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300
+                      hover:bg-sidebar-hover hover:text-white transition-colors duration-150 group
+                      {% block nav_dashboard_active %}{% endblock %}"
+               aria-label="Dashboard principal">
+                <svg class="sidebar-icon w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-primary-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 13a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z"/>
+                </svg>
+                <span class="sidebar-label text-sm font-medium">Dashboard</span>
+            </a>
+
+            <!-- Índice de Miséria -->
+            <a href="?metric=miseria"
+               id="nav-miseria"
+               title="Análise detalhada do Índice de Miséria (Inflação + Desemprego)"
+               class="sidebar-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400
+                      hover:bg-sidebar-hover hover:text-white transition-colors duration-150 group"
+               aria-label="Índice de Miséria">
+                <svg class="sidebar-icon w-4 h-4 flex-shrink-0 text-slate-500 group-hover:text-amber-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
+                </svg>
+                <span class="sidebar-label text-sm font-medium">Índice de Miséria</span>
+            </a>
+
+            <!-- IPCA / Inflação -->
+            <a href="?metric=ipca"
+               id="nav-ipca"
+               title="Acompanhamento do Índice Nacional de Preços ao Consumidor Amplo (Inflação)"
+               class="sidebar-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400
+                      hover:bg-sidebar-hover hover:text-white transition-colors duration-150 group"
+               aria-label="IPCA">
+                <svg class="sidebar-icon w-4 h-4 flex-shrink-0 text-slate-500 group-hover:text-emerald-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                <span class="sidebar-label text-sm font-medium">IPCA / Inflação</span>
+            </a>
+
+            <!-- Desemprego -->
+            <a href="?metric=desemprego"
+               id="nav-desemprego"
+               title="Evolução da taxa de desemprego baseada na PNAD Contínua"
+               class="sidebar-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400
+                      hover:bg-sidebar-hover hover:text-white transition-colors duration-150 group"
+               aria-label="Desemprego">
+                <svg class="sidebar-icon w-4 h-4 flex-shrink-0 text-slate-500 group-hover:text-rose-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <span class="sidebar-label text-sm font-medium">Desemprego</span>
+            </a>
+
+            <p class="sidebar-section-title text-slate-500 text-[10px] font-semibold uppercase tracking-widest px-3 pt-5 pb-2">
+                Sistema
+            </p>
+
+            <!-- Documentação -->
+            <a href="/admin/"
+               id="nav-admin"
+               title="Acesso ao painel administrativo do sistema para gestão de dados"
+               class="sidebar-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400
+                      hover:bg-sidebar-hover hover:text-white transition-colors duration-150 group"
+               aria-label="Administração">
+                <svg class="sidebar-icon w-4 h-4 flex-shrink-0 text-slate-500 group-hover:text-slate-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <span class="sidebar-label text-sm font-medium">Administração</span>
+            </a>
+        </nav>
+
+        <!-- Rodapé da Sidebar: Toggle collapse -->
+        <div class="flex-shrink-0 border-t border-white/5 p-3">
+            <button id="sidebar-toggle"
+                    onclick="toggleSidebar()"
+                    aria-label="Colapsar menu lateral"
+                    class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500
+                           hover:bg-sidebar-hover hover:text-slate-300 transition-colors duration-150">
+                <svg id="sidebar-toggle-icon" class="w-4 h-4 flex-shrink-0 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+                </svg>
+                <span class="sidebar-label text-xs font-medium">Recolher menu</span>
+            </button>
+        </div>
+    </aside>
+    <!-- /SIDEBAR -->
+
+    <!-- ══════════════════════════════════════════
+         ÁREA PRINCIPAL: Topbar + Conteúdo + Chat
+         ══════════════════════════════════════════ -->
+    <div id="main-area" class="flex flex-col flex-1 min-w-0 overflow-hidden">
+
+        <!-- ══════════════════
+             TOPBAR de Contexto
+             ══════════════════ -->
+        <header class="h-16 flex-shrink-0 bg-white dark:bg-slate-900
+                        border-b border-slate-200 dark:border-slate-800
+                        flex items-center justify-between px-6 z-20">
+
+            <!-- Breadcrumb / Título da página -->
+            <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                <span class="text-slate-400">/</span>
+                <span class="font-semibold text-slate-700 dark:text-slate-200">
+                    {% block page_title %}Dashboard{% endblock %}
+                </span>
+            </div>
+
+            <!-- Ações da Topbar -->
+            <div class="flex items-center gap-3">
+
+                <!-- Toggle Dark Mode -->
+                <button id="dark-mode-toggle"
+                        onclick="toggleDarkMode()"
+                        aria-label="Alternar modo escuro"
+                        class="w-9 h-9 flex items-center justify-center rounded-lg
+                               text-slate-400 hover:text-slate-700 dark:hover:text-slate-200
+                               hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <svg id="icon-sun" class="w-4 h-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
+                    </svg>
+                    <svg id="icon-moon" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                    </svg>
+                </button>
+
+                <!-- Badge de status IBGE -->
+                <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg
+                            bg-emerald-50 dark:bg-emerald-950/40
+                            border border-emerald-200 dark:border-emerald-800/50">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="text-xs font-medium text-emerald-700 dark:text-emerald-400">IBGE API Online</span>
+                </div>
+
+                <!-- Toggle do Chat no Mobile -->
+                <button id="mobile-chat-toggle"
+                        onclick="toggleMobileChat()"
+                        aria-label="Abrir assistente IA"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-lg
+                               bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold
+                               shadow-sm shadow-primary-900/30 transition-colors xl:hidden">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                    </svg>
+                    <span>Agente IA</span>
+                </button>
+            </div>
+        </header>
+        <!-- /TOPBAR -->
+
+        <!-- ══════════════════════════════════════════
+             CORPO: Conteúdo + Right Panel Chat
+             ══════════════════════════════════════════ -->
+        <div class="flex flex-1 overflow-hidden">
+
+            <!-- ══════════════════════════
+                 MAIN CONTENT — Gráficos e KPIs
+                 ══════════════════════════ -->
+            <main class="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-950"
+                  id="main-content"
+                  role="main"
+                  aria-label="Conteúdo principal">
+                <div class="p-6 xl:p-8">
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+            <!-- /MAIN CONTENT -->
+
+            <!-- ══════════════════════════════════
+                 RIGHT PANEL — Chat da IA (Desktop)
+                 ══════════════════════════════════ -->
+            <aside id="chat-panel"
+                   class="flex flex-col w-80 2xl:w-96 flex-shrink-0
+                          bg-white dark:bg-slate-900
+                          border-l border-slate-200 dark:border-slate-800"
+                   aria-label="Assistente de IA">
+                {% block chat_panel %}
+                    <!-- O chat_component.html será incluído aqui -->
+                {% endblock %}
+            </aside>
+            <!-- /RIGHT PANEL -->
+
+        </div>
+    </div>
+    <!-- /ÁREA PRINCIPAL -->
+
+</div>
+<!-- /APP ROOT -->
+
+<!-- ══════════════════════════════════════
+     MODAL DO CHAT — Mobile (< xl breakpoint)
+     ══════════════════════════════════════ -->
+<div id="mobile-chat-backdrop"
+     onclick="toggleMobileChat()"
+     class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 hidden xl:hidden"
+     aria-hidden="true">
+</div>
+
+<div id="mobile-chat-panel"
+     class="fixed bottom-0 right-0 left-0 z-50 flex flex-col
+            bg-white dark:bg-slate-900
+            rounded-t-2xl shadow-2xl
+            max-h-[85vh]
+            translate-y-full transition-transform duration-300 ease-out
+            xl:hidden"
+     role="dialog"
+     aria-modal="true"
+     aria-label="Chat da IA — Mobile">
+
+    <!-- Handle do modal mobile -->
+    <div class="flex justify-center pt-3 pb-1 flex-shrink-0">
+        <div class="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></div>
+    </div>
+
+    {% block mobile_chat_panel %}
+        <!-- Conteúdo do chat injetado pelo dashboard.html -->
+    {% endblock %}
+</div>
+
+<!-- ══════════════════════
+     SCRIPTS GLOBAIS
+     ══════════════════════ -->
+<script>
+    // ─── Dark Mode ───────────────────────────────────────────
+    const htmlEl = document.documentElement;
+    const sunIcon  = document.getElementById('icon-sun');
+    const moonIcon = document.getElementById('icon-moon');
+
+    function applyTheme(dark) {
+        if (dark) {
+            htmlEl.classList.add('dark');
+            sunIcon.classList.remove('hidden');
+            moonIcon.classList.add('hidden');
+        } else {
+            htmlEl.classList.remove('dark');
+            sunIcon.classList.add('hidden');
+            moonIcon.classList.remove('hidden');
+        }
+        localStorage.setItem('theme', dark ? 'dark' : 'light');
+    }
+
+    function toggleDarkMode() {
+        applyTheme(!htmlEl.classList.contains('dark'));
+    }
+
+    // Aplica preferência salva ou sistema
+    (function () {
+        const saved = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        applyTheme(saved === 'dark' || (!saved && prefersDark));
+    })();
+
+
+    // ─── Sidebar Toggle ──────────────────────────────────────
+    const sidebar = document.getElementById('sidebar');
+    const toggleIcon = document.getElementById('sidebar-toggle-icon');
+    let sidebarCollapsed = false;
+
+    function toggleSidebar() {
+        sidebarCollapsed = !sidebarCollapsed;
+        sidebar.classList.toggle('collapsed', sidebarCollapsed);
+        if (sidebarCollapsed) {
+            sidebar.style.width = '4rem';
+            toggleIcon.style.transform = 'rotate(180deg)';
+        } else {
+            sidebar.style.width = '16rem';
+            toggleIcon.style.transform = 'rotate(0deg)';
+        }
+        localStorage.setItem('sidebarCollapsed', sidebarCollapsed);
+    }
+
+    // Restaura estado da sidebar
+    (function () {
+        if (localStorage.getItem('sidebarCollapsed') === 'true') {
+            toggleSidebar();
+        }
+    })();
+
+
+    // ─── Mobile Chat Toggle ───────────────────────────────────
+    const mobilePanel   = document.getElementById('mobile-chat-panel');
+    const mobileBackdrop = document.getElementById('mobile-chat-backdrop');
+    let chatOpen = false;
+
+    function toggleMobileChat() {
+        chatOpen = !chatOpen;
+        if (chatOpen) {
+            mobilePanel.style.transform   = 'translateY(0)';
+            mobileBackdrop.classList.remove('hidden');
+            document.body.style.overflow  = 'hidden';
+        } else {
+            mobilePanel.style.transform   = 'translateY(100%)';
+            mobileBackdrop.classList.add('hidden');
+            document.body.style.overflow  = '';
+    }
+
+    // ─── Funções Globais do Chat ──────────────────────────────
+    function autoResize(el) {
+        el.style.height = 'auto';
+        el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+    }
+
+    function handleChatKey(e, chatId) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            const form = document.getElementById('chat-form-' + chatId);
+            if (form && form.querySelector('[name="query"]').value.trim()) {
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.click();
+                } else {
+                    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                }
+            }
+        }
+    }
+
+    function toggleDesktopChat(chatId) {
+        const messages = document.getElementById('chat-messages-' + chatId);
+        const formContainer = document.getElementById('chat-form-' + chatId).parentElement;
+        const suggestions = document.getElementById('suggestions-' + chatId);
+        const icon = document.querySelector('#toggle-chat-btn-' + chatId + ' svg');
+        
+        if (messages.style.display === 'none') {
+            messages.style.display = '';
+            formContainer.style.display = '';
+            if (suggestions && suggestions.dataset.hidden !== 'true') {
+                suggestions.style.display = '';
+            }
+            if (icon) icon.style.transform = 'rotate(0deg)';
+        } else {
+            messages.style.display = 'none';
+            formContainer.style.display = 'none';
+            if (suggestions) {
+                if (suggestions.style.display === 'none') {
+                    suggestions.dataset.hidden = 'true';
+                } else {
+                    suggestions.dataset.hidden = 'false';
+                    suggestions.style.display = 'none';
+                }
+            }
+            if (icon) icon.style.transform = 'rotate(180deg)';
+        }
+    }
+
+    function onChatAfterRequest(chatId) {
+        const input = document.getElementById('input-' + chatId);
+        const messages = document.getElementById('chat-messages-' + chatId);
+        if (input) {
+            input.value = '';
+            input.style.height = 'auto';
+        }
+        const suggestions = document.getElementById('suggestions-' + chatId);
+        if (suggestions) suggestions.style.display = 'none';
+        
+        setTimeout(() => {
+            if (messages) messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' });
+        }, 100);
+    }
+
+    function fillQuery(chatId, btn) {
+        const input = document.getElementById('input-' + chatId);
+        if (input) {
+            input.value = btn.textContent.trim();
+            input.focus();
+            autoResize(input);
+        }
+    }
+
+    function clearChat(chatId) {
+        const messages = document.getElementById('chat-messages-' + chatId);
+        if (messages) {
+            Array.from(messages.children).forEach(child => {
+                if (child.id !== 'welcome-' + chatId) child.remove();
+            });
+        }
+        const suggestions = document.getElementById('suggestions-' + chatId);
+        if (suggestions) suggestions.style.display = '';
+    }
+</script>
+
+{% block extra_scripts %}{% endblock %}
+
+</body>
+</html>

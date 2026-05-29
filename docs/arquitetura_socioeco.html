@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Arquitetura — SocioEcoData</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:          #0d1117;
+      --surface:     #161b22;
+      --border:      #30363d;
+
+      /* Accent palette */
+      --blue:        #1e6fb5;
+      --blue-light:  #2d8de8;
+      --teal:        #0e8e7a;
+      --teal-light:  #17b89d;
+      --purple:      #6e3fb5;
+      --purple-light:#9b6fe8;
+      --amber:       #b5680e;
+      --amber-light: #e8941d;
+      --rose:        #b51e4a;
+      --rose-light:  #e83d70;
+      --green:       #1a7a2e;
+      --green-light: #2db54a;
+
+      /* Text */
+      --text-primary:   #e6edf3;
+      --text-secondary: #8b949e;
+      --text-muted:     #58636e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      font-family: 'Inter', sans-serif;
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 32px 24px 48px;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────────── */
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .header h1 span.sep { color: var(--text-muted); margin: 0 6px; }
+    .header h1 span.project {
+      background: linear-gradient(90deg, var(--blue-light), var(--teal-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header p {
+      margin-top: 6px;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      letter-spacing: 0.5px;
+    }
+
+    /* ── DIAGRAM WRAPPER ─────────────────────────────────────── */
+    .diagram {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+
+    /* ── GENERIC SECTION ─────────────────────────────────────── */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      position: relative;
+    }
+    .section-label {
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+    .chip {
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    /* ── COLOR HELPERS ───────────────────────────────────────── */
+    .blue   { border-color: var(--blue);   color: var(--blue-light);   background: rgba(30,111,181,.12); }
+    .teal   { border-color: var(--teal);   color: var(--teal-light);   background: rgba(14,142,122,.12); }
+    .purple { border-color: var(--purple); color: var(--purple-light); background: rgba(110,63,181,.12); }
+    .amber  { border-color: var(--amber);  color: var(--amber-light);  background: rgba(181,104,14,.12); }
+    .rose   { border-color: var(--rose);   color: var(--rose-light);   background: rgba(181,30,74,.12);  }
+    .green  { border-color: var(--green);  color: var(--green-light);  background: rgba(26,122,46,.12);  }
+
+    .label-blue   { color: var(--blue-light);   }
+    .label-teal   { color: var(--teal-light);   }
+    .label-purple { color: var(--purple-light); }
+    .label-amber  { color: var(--amber-light);  }
+    .label-rose   { color: var(--rose-light);   }
+    .label-green  { color: var(--green-light);  }
+
+    /* ── ARROW ───────────────────────────────────────────────── */
+    .arrow-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 28px;
+      gap: 0;
+    }
+    .arrow-down {
+      width: 2px;
+      height: 20px;
+      background: var(--border);
+      position: relative;
+      margin: 0 auto;
+    }
+    .arrow-down::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid var(--border);
+    }
+    .arrow-h {
+      width: 24px;
+      height: 2px;
+      background: var(--border);
+      position: relative;
+    }
+    .arrow-h::after {
+      content: '';
+      position: absolute;
+      right: -5px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-left: 6px solid var(--border);
+    }
+    .arrow-h.left::after {
+      right: auto;
+      left: -5px;
+      border-left: none;
+      border-right: 6px solid var(--border);
+    }
+
+    /* ── ROW 1 — Canais + Usuários ───────────────────────────── */
+    .row-top {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* ── ROW 2 — Fontes | Plataforma | Saídas ───────────────── */
+    .row-mid {
+      display: grid;
+      grid-template-columns: 200px 1fr 200px;
+      gap: 16px;
+      align-items: stretch;
+    }
+    .col-left-mid {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .col-left-mid .chip {
+      width: 100%;
+      text-align: center;
+    }
+    .plataforma-box {
+      border: 1px solid var(--blue);
+      border-radius: 10px;
+      padding: 14px;
+      background: rgba(30,111,181,.06);
+      position: relative;
+    }
+    .plataforma-box .section-label { color: var(--blue-light); }
+    .plataforma-modules {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .module-card {
+      border-radius: 8px;
+      padding: 10px 8px;
+      border: 1px solid;
+      min-height: 130px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .module-card .mod-title {
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .module-card .mod-item {
+      font-size: 0.67rem;
+      padding: 3px 7px;
+      border-radius: 5px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      color: var(--text-secondary);
+    }
+
+    .mod-blue   { border-color: var(--blue);   background: rgba(30,111,181,.08); }
+    .mod-blue   .mod-title { color: var(--blue-light); }
+    .mod-teal   { border-color: var(--teal);   background: rgba(14,142,122,.08); }
+    .mod-teal   .mod-title { color: var(--teal-light); }
+    .mod-amber  { border-color: var(--amber);  background: rgba(181,104,14,.08); }
+    .mod-amber  .mod-title { color: var(--amber-light); }
+    .mod-purple { border-color: var(--purple); background: rgba(110,63,181,.08); }
+    .mod-purple .mod-title { color: var(--purple-light); }
+    .mod-rose   { border-color: var(--rose);   background: rgba(181,30,74,.08); }
+    .mod-rose   .mod-title { color: var(--rose-light); }
+
+    .col-right-mid {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .col-right-mid .chip {
+      width: 100%;
+      text-align: center;
+    }
+
+    /* ── ROW 3 — Serviços ────────────────────────────────────── */
+    .servicos-box {
+      border: 1px solid var(--teal);
+      border-radius: 10px;
+      padding: 14px 16px;
+      background: rgba(14,142,122,.06);
+    }
+    .servicos-box .section-label { color: var(--teal-light); }
+
+    /* ── ROW 4 — Dados + IA ──────────────────────────────────── */
+    .row-dados {
+      display: grid;
+      grid-template-columns: 1fr 220px;
+      gap: 16px;
+      align-items: stretch;
+    }
+    .dados-box {
+      border: 1px solid var(--purple);
+      border-radius: 10px;
+      padding: 14px;
+      background: rgba(110,63,181,.06);
+    }
+    .dados-box .section-label { color: var(--purple-light); }
+    .dados-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 4px;
+    }
+    .dados-col {
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 8px;
+      padding: 10px;
+      background: rgba(255,255,255,.03);
+    }
+    .dados-col .dc-title {
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      color: var(--text-muted);
+    }
+    .dados-col .dc-item {
+      font-size: 0.68rem;
+      padding: 4px 8px;
+      border-radius: 5px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.07);
+      color: var(--text-secondary);
+      margin-bottom: 5px;
+    }
+    .ia-box {
+      border: 1px solid var(--rose);
+      border-radius: 10px;
+      padding: 14px;
+      background: rgba(181,30,74,.06);
+    }
+    .ia-box .section-label { color: var(--rose-light); }
+    .ia-box .chip { width: 100%; text-align: center; margin-bottom: 3px; }
+
+    /* ── ROW 5 — Bottom ──────────────────────────────────────── */
+    .row-bottom {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 160px;
+      gap: 16px;
+    }
+    .legend-box {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      background: var(--surface);
+    }
+    .legend-box .section-label { color: var(--text-muted); }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 7px;
+      font-size: 0.68rem;
+      color: var(--text-secondary);
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* ── VERTICAL ARROW between mid-col fontes and plataforma ── */
+    .mid-arrow-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+    }
+
+    /* ── SPACING HELPERS ─────────────────────────────────────── */
+    .gap-row { height: 16px; }
+    
+    /* ── BORDER ACCENT ───────────────────────────────────────── */
+    .section.accent-blue  { border-color: rgba(30,111,181,.5);  }
+    .section.accent-teal  { border-color: rgba(14,142,122,.5);  }
+    .section.accent-amber { border-color: rgba(181,104,14,.5);  }
+    .section.accent-green { border-color: rgba(26,122,46,.5);   }
+    .section.accent-rose  { border-color: rgba(181,30,74,.5);   }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <h1>ARQUITETURA <span class="sep">—</span> <span class="project">SocioEcoData</span></h1>
+  <p>Dados, Inteligência e Análise Socioeconômica com IA</p>
+</div>
+
+<div class="diagram">
+
+  <!-- ── ROW 1: CANAIS DE ACESSO + USUÁRIOS ── -->
+  <div class="row-top">
+
+    <div class="section accent-blue">
+      <div class="section-label label-blue">Canais de Acesso</div>
+      <div class="chips">
+        <span class="chip blue">Navegador Web</span>
+        <span class="chip blue">Dashboard Analítico</span>
+        <span class="chip blue">Chat com IA (HTMX)</span>
+        <span class="chip blue">Painel Admin (Django)</span>
+        <span class="chip blue">API REST</span>
+      </div>
+    </div>
+
+    <div class="section accent-teal">
+      <div class="section-label label-teal">Usuários</div>
+      <div class="chips">
+        <span class="chip teal">Analista de Dados</span>
+        <span class="chip teal">Pesquisador</span>
+        <span class="chip teal">Gestor Público</span>
+        <span class="chip teal">Desenvolvedor</span>
+        <span class="chip teal">Administrador</span>
+      </div>
+    </div>
+
+  </div><!-- /row-top -->
+
+  <!-- Arrow down -->
+  <div class="arrow-row"><div class="arrow-down"></div></div>
+
+  <!-- ── ROW 2: FONTES | PLATAFORMA | SAÍDAS ── -->
+  <div class="row-mid">
+
+    <!-- FONTES DE DADOS (left column with internal arrows) -->
+    <div style="display:flex; flex-direction:column; gap:0; align-items:stretch;">
+      <div class="section accent-amber" style="flex:1;">
+        <div class="section-label label-amber">Fontes de Dados</div>
+        <div class="col-left-mid" style="margin-top:0;">
+          <span class="chip amber" style="width:100%;text-align:center;">API IBGE SIDRA</span>
+          <span class="chip amber" style="width:100%;text-align:center;">IPCA — Inflação</span>
+          <span class="chip amber" style="width:100%;text-align:center;">Desemprego (PNAD)</span>
+          <span class="chip amber" style="width:100%;text-align:center;">Séries Históricas</span>
+          <span class="chip amber" style="width:100%;text-align:center;">Notas Metodológicas</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Arrow horizontal right → Plataforma -->
+    <!-- (visual gap handled by grid) -->
+
+    <!-- PLATAFORMA CENTRAL -->
+    <div class="plataforma-box">
+      <div class="section-label">Plataforma SocioEcoData</div>
+      <div class="plataforma-modules">
+
+        <!-- Módulo 1 -->
+        <div class="module-card mod-blue">
+          <div class="mod-title">1. Coleta &amp; ETL</div>
+          <div class="mod-item">Script Pandas</div>
+          <div class="mod-item">Requisições HTTP</div>
+          <div class="mod-item">API IBGE SIDRA</div>
+          <div class="mod-item">Inserção ORM</div>
+          <div class="mod-item">Cmd. Django</div>
+        </div>
+
+        <!-- Módulo 2 -->
+        <div class="module-card mod-teal">
+          <div class="mod-title">2. Proc. &amp; Indexação</div>
+          <div class="mod-item">Geração Embeddings</div>
+          <div class="mod-item">text-embedding-3-small</div>
+          <div class="mod-item">Indexação pgvector</div>
+          <div class="mod-item">Normalização</div>
+          <div class="mod-item">Validação Pandas</div>
+        </div>
+
+        <!-- Módulo 3 -->
+        <div class="module-card mod-amber">
+          <div class="mod-title">3. Dashboard Analítico</div>
+          <div class="mod-item">Gráficos Chart.js</div>
+          <div class="mod-item">KPIs em Tempo Real</div>
+          <div class="mod-item">Índice de Miséria</div>
+          <div class="mod-item">TailwindCSS</div>
+          <div class="mod-item">Templates Django</div>
+        </div>
+
+        <!-- Módulo 4 -->
+        <div class="module-card mod-purple">
+          <div class="mod-title">4. Indicadores &amp; BI</div>
+          <div class="mod-item">Séries Temporais</div>
+          <div class="mod-item">Variação Mensal</div>
+          <div class="mod-item">IPCA vs Desemprego</div>
+          <div class="mod-item">Filtros por Região</div>
+          <div class="mod-item">Histórico 12 meses</div>
+        </div>
+
+        <!-- Módulo 5 -->
+        <div class="module-card mod-rose">
+          <div class="mod-title">5. IA &amp; Síntese</div>
+          <div class="mod-item">Chat Multiagente</div>
+          <div class="mod-item">Busca Híbrida</div>
+          <div class="mod-item">RAG com pgvector</div>
+          <div class="mod-item">GPT-4o-mini</div>
+          <div class="mod-item">Resp. em HTML</div>
+        </div>
+
+      </div>
+    </div><!-- /plataforma -->
+
+    <!-- SAÍDAS E AÇÕES (right column) -->
+    <div style="display:flex; flex-direction:column; gap:0; align-items:stretch;">
+      <div class="section accent-green" style="flex:1;">
+        <div class="section-label label-green">Saídas &amp; Ações</div>
+        <div class="col-right-mid">
+          <span class="chip green" style="width:100%;text-align:center;">Gráficos Interativos</span>
+          <span class="chip green" style="width:100%;text-align:center;">Índice de Miséria</span>
+          <span class="chip green" style="width:100%;text-align:center;">Alertas de Variação</span>
+          <span class="chip green" style="width:100%;text-align:center;">Respostas da IA</span>
+          <span class="chip green" style="width:100%;text-align:center;">Exportação de Dados</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /row-mid -->
+
+  <!-- Arrow down -->
+  <div class="arrow-row"><div class="arrow-down"></div></div>
+
+  <!-- ── ROW 3: SERVIÇOS E REGRAS DE NEGÓCIO ── -->
+  <div class="servicos-box">
+    <div class="section-label">Serviços e Regras de Negócio</div>
+    <div class="chips">
+      <span class="chip teal">Orquestrador Antigravity</span>
+      <span class="chip teal">RouterAgent — Classificação de Intenção</span>
+      <span class="chip teal">ExtractorAgent — Consulta SQL + Vetorial</span>
+      <span class="chip teal">SynthesizerAgent — Geração de Resposta</span>
+      <span class="chip teal">Cálculo do Índice de Miséria</span>
+      <span class="chip teal">Busca por Similaridade de Cosseno</span>
+    </div>
+  </div>
+
+  <!-- Arrow down -->
+  <div class="arrow-row"><div class="arrow-down"></div></div>
+
+  <!-- ── ROW 4: CAMADA DE DADOS + IA E ANALYTICS ── -->
+  <div class="row-dados">
+
+    <!-- CAMADA DE DADOS -->
+    <div class="dados-box">
+      <div class="section-label">Camada de Dados</div>
+      <div class="dados-grid">
+
+        <div class="dados-col">
+          <div class="dc-title" style="color:var(--purple-light);">Banco Operacional</div>
+          <div class="dc-item">PostgreSQL 16</div>
+          <div class="dc-item">Django ORM (psycopg2)</div>
+          <div class="dc-item">MetricaSocioEconomica</div>
+          <div class="dc-item">Índices por Data/Tipo</div>
+          <div class="dc-item">Docker (pgvector/pg16)</div>
+        </div>
+
+        <div class="dados-col">
+          <div class="dc-title" style="color:var(--blue-light);">Data Warehouse / Analítico</div>
+          <div class="dc-item">pgvector (extensão)</div>
+          <div class="dc-item">Embeddings 1536 dims</div>
+          <div class="dc-item">Distância de Cosseno (&lt;=&gt;)</div>
+          <div class="dc-item">Busca por Similaridade</div>
+          <div class="dc-item">Supabase (Cloud DB)</div>
+        </div>
+
+        <div class="dados-col">
+          <div class="dc-title" style="color:var(--amber-light);">Armazenamento Documental</div>
+          <div class="dc-item">DocumentoMetodologico</div>
+          <div class="dc-item">Notas IBGE (texto)</div>
+          <div class="dc-item">Vetores OpenAI</div>
+          <div class="dc-item">RAW SQL (pgvector)</div>
+          <div class="dc-item">Auto-atualização</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- IA E ANALYTICS -->
+    <div class="ia-box">
+      <div class="section-label">IA e Analytics</div>
+      <div style="display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+        <span class="chip rose" style="width:100%; text-align:center;">RouterAgent</span>
+        <span class="chip rose" style="width:100%; text-align:center;">ExtractorAgent</span>
+        <span class="chip rose" style="width:100%; text-align:center;">SynthesizerAgent</span>
+        <span class="chip rose" style="width:100%; text-align:center;">GPT-4o-mini</span>
+        <span class="chip rose" style="width:100%; text-align:center;">text-embedding-3-small</span>
+        <span class="chip rose" style="width:100%; text-align:center;">Busca Híbrida (RAG)</span>
+      </div>
+    </div>
+
+  </div><!-- /row-dados -->
+
+  <!-- Gap -->
+  <div class="gap-row"></div>
+
+  <!-- ── ROW 5: INFRAESTRUTURA | SEGURANÇA | INTEGRAÇÕES | LEGENDA ── -->
+  <div class="row-bottom">
+
+    <div class="section accent-blue">
+      <div class="section-label label-blue">Infraestrutura</div>
+      <div class="chips" style="flex-direction:column; gap:5px;">
+        <span class="chip blue">Docker (PostgreSQL)</span>
+        <span class="chip blue">Django WSGI</span>
+        <span class="chip blue">django-environ (.env)</span>
+        <span class="chip blue">Supabase (Cloud)</span>
+        <span class="chip blue">GitHub / Controle de Versão</span>
+      </div>
+    </div>
+
+    <div class="section accent-teal">
+      <div class="section-label label-teal">Segurança e Privacidade</div>
+      <div class="chips" style="flex-direction:column; gap:5px;">
+        <span class="chip teal">Variáveis de Ambiente</span>
+        <span class="chip teal">Django CSRF</span>
+        <span class="chip teal">SECRET_KEY protegida</span>
+        <span class="chip teal">ALLOWED_HOSTS</span>
+        <span class="chip teal">Credenciais via .env</span>
+      </div>
+    </div>
+
+    <div class="section accent-amber">
+      <div class="section-label label-amber">Integrações Externas</div>
+      <div class="chips" style="flex-direction:column; gap:5px;">
+        <span class="chip amber">API IBGE SIDRA (HTTP)</span>
+        <span class="chip amber">OpenAI API</span>
+        <span class="chip amber">Supabase (PostgreSQL)</span>
+        <span class="chip amber">Docker Hub (pgvector)</span>
+        <span class="chip amber">Google Fonts (UI)</span>
+      </div>
+    </div>
+
+    <div class="legend-box">
+      <div class="section-label">Legenda</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--blue-light);"></div> Canal / UI</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--teal-light);"></div> Serviço / Negócio</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--purple-light);"></div> Banco de Dados</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--rose-light);"></div> IA / Agente</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--amber-light);"></div> Dado Externo / ETL</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green-light);"></div> Saída / Resultado</div>
+    </div>
+
+  </div><!-- /row-bottom -->
+
+</div><!-- /diagram -->
+
+</body>
+</html>

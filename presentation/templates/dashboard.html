@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard Analítico{% endblock %}
+
+{# Marca o item de nav ativo #}
+{% block nav_dashboard_active %}bg-sidebar-active text-white{% endblock %}
+
+{# ═══════════════════════════════════════════════════
+   CONTEÚDO PRINCIPAL
+   ═══════════════════════════════════════════════════ #}
+{% block content %}
+
+<!-- Cabeçalho da Página -->
+<div class="mb-8">
+    <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+        Painel SocioEcoInsight
+    </h1>
+    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        Monitoramento em tempo real da economia brasileira · Fonte: IBGE / SIDRA API
+    </p>
+</div>
+
+<!-- ═══════════════════════════════════
+     LINHA DE KPI CARDS
+     ═══════════════════════════════════ -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
+
+    <!-- KPI 1: Índice de Miséria -->
+    <div class="relative bg-white dark:bg-slate-900
+                rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800
+                p-5 flex flex-col gap-4 hover:shadow-md transition-shadow duration-200 group"
+         id="card-miseria">
+
+        <!-- Badge de tendência -->
+        <div class="flex items-start justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-950/50
+                            flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
+                    </svg>
+                </div>
+                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Índice de Miséria
+                </span>
+            </div>
+            <!-- Badge variação semântica -->
+            {% if variacao|stringformat:"s"|slice:":1" == "-" %}
+                <span class="inline-flex items-center gap-1 text-xs font-bold
+                             text-emerald-700 dark:text-emerald-400
+                             bg-emerald-50 dark:bg-emerald-950/50
+                             border border-emerald-200 dark:border-emerald-800
+                             px-2 py-0.5 rounded-full"
+                      title="Variação em relação ao mês anterior">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                    </svg>
+                    {{ variacao }}%
+                </span>
+            {% else %}
+                <span class="inline-flex items-center gap-1 text-xs font-bold
+                             text-rose-700 dark:text-rose-400
+                             bg-rose-50 dark:bg-rose-950/50
+                             border border-rose-200 dark:border-rose-800
+                             px-2 py-0.5 rounded-full"
+                      title="Variação em relação ao mês anterior">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                    </svg>
+                    +{{ variacao }}%
+                </span>
+            {% endif %}
+        </div>
+
+        <!-- Valor principal -->
+        <div>
+            <span class="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                {{ indice_miseria_atual }}<span class="text-xl font-semibold text-slate-400 ml-0.5">%</span>
+            </span>
+            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1.5">
+                vs mês anterior consolidado
+            </p>
+        </div>
+
+        <!-- Faixinha de cor na base -->
+        <div class="absolute bottom-0 left-0 right-0 h-0.5 rounded-b-2xl
+                    bg-gradient-to-r from-amber-400 to-orange-500
+                    opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        </div>
+    </div>
+
+    <!-- KPI 2: Composição (IPCA + Desemprego) -->
+    <div class="relative overflow-hidden
+                bg-gradient-to-br from-primary-700 to-primary-900
+                rounded-2xl shadow-lg p-5 flex flex-col gap-4"
+         id="card-composicao">
+
+        <!-- Círculos decorativos de fundo -->
+        <div class="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/5"></div>
+        <div class="absolute -bottom-8 -left-4 w-32 h-32 rounded-full bg-white/5"></div>
+
+        <div class="relative z-10">
+            <span class="text-xs font-semibold text-primary-200 uppercase tracking-wider">
+                Composição do Índice
+            </span>
+        </div>
+        <div class="relative z-10 flex flex-col gap-3">
+            <!-- IPCA -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></span>
+                    <span class="text-sm text-primary-100 font-medium">IPCA (Inflação)</span>
+                </div>
+                <span class="text-sm font-bold text-white font-mono">12M acum.</span>
+            </div>
+            <!-- Desemprego -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0"></span>
+                    <span class="text-sm text-primary-100 font-medium">Desemprego (PNAD)</span>
+                </div>
+                <span class="text-sm font-bold text-white font-mono">Tri. móvel</span>
+            </div>
+        </div>
+        <div class="relative z-10 text-xs text-primary-300 mt-1">
+            Metodologia Okun (1962)
+        </div>
+    </div>
+
+    <!-- KPI 3: Fonte dos Dados / Última Atualização -->
+    <div class="relative bg-white dark:bg-slate-900
+                rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800
+                p-5 flex flex-col gap-4 hover:shadow-md transition-shadow duration-200 group
+                sm:col-span-2 xl:col-span-1"
+         id="card-fonte">
+
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-sky-100 dark:bg-sky-950/50
+                        flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4 text-sky-600 dark:text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                </svg>
+            </div>
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                Fonte dos Dados
+            </span>
+        </div>
+
+        <div class="space-y-2">
+            <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
+                <span class="text-sm text-slate-700 dark:text-slate-300 font-medium">IBGE · SIDRA API</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-sky-500 flex-shrink-0"></span>
+                <span class="text-sm text-slate-700 dark:text-slate-300 font-medium">pgvector · Semantic Search</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-primary-500 flex-shrink-0"></span>
+                <span class="text-sm text-slate-700 dark:text-slate-300 font-medium">OpenAI · Multi-Agent RAG</span>
+            </div>
+        </div>
+
+        <div class="absolute bottom-0 left-0 right-0 h-0.5 rounded-b-2xl
+                    bg-gradient-to-r from-sky-400 to-primary-500
+                    opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        </div>
+    </div>
+
+</div>
+<!-- /KPI CARDS -->
+
+<!-- ═══════════════════════════════════
+     GRÁFICO HISTÓRICO
+     ═══════════════════════════════════ -->
+<div class="bg-white dark:bg-slate-900
+            rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800
+            overflow-hidden"
+     id="chart-card">
+
+    <!-- Cabeçalho do Card -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between
+                gap-4 px-6 pt-6 pb-4
+                border-b border-slate-100 dark:border-slate-800">
+        <div>
+            <h2 class="text-base font-semibold text-slate-800 dark:text-slate-100">
+                Evolução Histórica das Métricas
+            </h2>
+            <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                IPCA acumulado 12M · Taxa de Desemprego trimestral · Índice de Miséria composto
+            </p>
+        </div>
+
+        <!-- Legenda interativa -->
+        <div class="flex flex-wrap items-center gap-4 text-xs font-medium">
+            <button class="chart-legend-btn flex items-center gap-1.5 text-slate-500 dark:text-slate-400
+                           hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                    data-dataset="0" aria-label="Alternar Índice de Miséria">
+                <span class="w-3 h-0.5 rounded-full bg-primary-500 inline-block"></span>
+                Miséria
+            </button>
+            <button class="chart-legend-btn flex items-center gap-1.5 text-slate-500 dark:text-slate-400
+                           hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                    data-dataset="1" aria-label="Alternar IPCA">
+                <span class="w-3 h-0.5 rounded-full bg-emerald-500 inline-block"></span>
+                IPCA
+            </button>
+            <button class="chart-legend-btn flex items-center gap-1.5 text-slate-500 dark:text-slate-400
+                           hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                    data-dataset="2" aria-label="Alternar Desemprego">
+                <span class="w-3 h-0.5 rounded-full bg-amber-500 inline-block"></span>
+                Desemprego
+            </button>
+        </div>
+    </div>
+
+    <!-- Canvas do Gráfico -->
+    <div class="p-6" style="position: relative; height: 340px;">
+        <canvas id="historicoChart" role="img" aria-label="Gráfico histórico de métricas socioeconômicas"></canvas>
+    </div>
+</div>
+<!-- /GRÁFICO HISTÓRICO -->
+
+{% endblock %}
+
+{# ═══════════════════════════════════════════════════
+   PAINEL DE CHAT — Desktop (Right Panel)
+   ═══════════════════════════════════════════════════ #}
+{% block chat_panel %}
+    {% with chat_id="main" %}
+        {% include "chat_component.html" %}
+    {% endwith %}
+{% endblock %}
+
+{# Chat no modal mobile com ID diferente para evitar conflito de IDs #}
+{% block mobile_chat_panel %}
+    {% with chat_id="mobile" %}
+        {% include "chat_component.html" %}
+    {% endwith %}
+{% endblock %}
+
+{# ═══════════════════════════════════════════════════
+   SCRIPTS DA PÁGINA
+   ═══════════════════════════════════════════════════ #}
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // ─── Dados do servidor (injetados pelo Django) ────────────
+    const chartData = JSON.parse('{{ chart_data_json|escapejs }}');
+
+    // ─── Paleta de cores ──────────────────────────────────────
+    const COLORS = {
+        miseria:    { line: '#6366f1', fill: 'rgba(99,102,241,0.08)',   point: '#4f46e5' },
+        ipca:       { line: '#10b981', fill: 'rgba(16,185,129,0)',       point: '#059669' },
+        desemprego: { line: '#f59e0b', fill: 'rgba(245,158,11,0)',       point: '#d97706' },
+    };
+
+    // ─── Detecta dark mode ────────────────────────────────────
+    function isDark() {
+        return document.documentElement.classList.contains('dark');
+    }
+
+    function getGridColor() {
+        return isDark() ? 'rgba(148,163,184,0.08)' : 'rgba(148,163,184,0.2)';
+    }
+
+    function getTickColor() {
+        return isDark() ? '#94a3b8' : '#64748b';
+    }
+
+    // ─── Configuração do Chart.js ─────────────────────────────
+    const ctx = document.getElementById('historicoChart').getContext('2d');
+
+    const historicoChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartData.labels,
+            datasets: [
+                {
+                    label: 'Índice de Miséria',
+                    data: chartData.miseria,
+                    borderColor: COLORS.miseria.line,
+                    backgroundColor: COLORS.miseria.fill,
+                    pointBackgroundColor: COLORS.miseria.point,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    borderWidth: 2.5,
+                    fill: true,
+                    tension: 0.45,
+                    order: 0,
+                },
+                {
+                    label: 'IPCA',
+                    data: chartData.ipca,
+                    borderColor: COLORS.ipca.line,
+                    backgroundColor: COLORS.ipca.fill,
+                    pointBackgroundColor: COLORS.ipca.point,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    borderWidth: 1.8,
+                    borderDash: [6, 3],
+                    fill: false,
+                    tension: 0.4,
+                    order: 1,
+                },
+                {
+                    label: 'Desemprego',
+                    data: chartData.desemprego,
+                    borderColor: COLORS.desemprego.line,
+                    backgroundColor: COLORS.desemprego.fill,
+                    pointBackgroundColor: COLORS.desemprego.point,
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    borderWidth: 1.8,
+                    borderDash: [3, 3],
+                    fill: false,
+                    tension: 0.4,
+                    order: 2,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: { display: false }, // Legenda customizada no HTML
+                tooltip: {
+                    backgroundColor: isDark() ? '#1e293b' : '#0f172a',
+                    titleColor: '#e2e8f0',
+                    bodyColor: '#94a3b8',
+                    borderColor: isDark() ? '#334155' : '#1e293b',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 10,
+                    titleFont: { size: 12, weight: '600', family: 'Inter' },
+                    bodyFont:  { size: 12, family: 'Inter' },
+                    callbacks: {
+                        title: (items) => `📅 ${items[0].label}`,
+                        label: (item) => {
+                            const icons = ['📊', '📈', '👥'];
+                            return ` ${icons[item.datasetIndex]} ${item.dataset.label}: ${item.formattedValue}%`;
+                        },
+                    },
+                },
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: getGridColor(),
+                        drawBorder: false,
+                    },
+                    ticks: {
+                        color: getTickColor(),
+                        font: { size: 11, family: 'Inter' },
+                        maxRotation: 45,
+                        maxTicksLimit: 12,
+                    },
+                },
+                y: {
+                    grid: {
+                        color: getGridColor(),
+                        drawBorder: false,
+                    },
+                    ticks: {
+                        color: getTickColor(),
+                        font: { size: 11, family: 'Inter' },
+                        callback: (v) => `${v}%`,
+                    },
+                    beginAtZero: false,
+                },
+            },
+            animation: {
+                duration: 800,
+                easing: 'easeInOutQuart',
+            },
+        },
+    });
+
+    // ─── Botões de legenda customizada ────────────────────────
+    document.querySelectorAll('.chart-legend-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.dataset);
+            const meta = historicoChart.getDatasetMeta(idx);
+            meta.hidden = !meta.hidden;
+            btn.style.opacity = meta.hidden ? '0.35' : '1';
+            btn.style.textDecoration = meta.hidden ? 'line-through' : '';
+            historicoChart.update();
+        });
+    });
+
+    // ─── Re-aplica cores do gráfico ao mudar dark mode ────────
+    const observer = new MutationObserver(() => {
+        historicoChart.options.plugins.tooltip.backgroundColor = isDark() ? '#1e293b' : '#0f172a';
+        historicoChart.options.scales.x.grid.color  = getGridColor();
+        historicoChart.options.scales.y.grid.color  = getGridColor();
+        historicoChart.options.scales.x.ticks.color = getTickColor();
+        historicoChart.options.scales.y.ticks.color = getTickColor();
+        historicoChart.update('none');
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+});
+</script>
+{% endblock %}

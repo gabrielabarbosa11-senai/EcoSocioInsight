@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  db:
+    # Imagem oficial do PostgreSQL com pgvector pré-instalado
+    image: pgvector/pgvector:pg16
+    container_name: socioeco_db
+    restart: always
+    environment:
+      POSTGRES_USER: socio_user
+      POSTGRES_PASSWORD: socio_password
+      POSTGRES_DB: socio_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Script de inicialização: ativa a extensão pgvector no banco
+      - ./scripts/init_pgvector.sql:/docker-entrypoint-initdb.d/init_pgvector.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U socio_user -d socio_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+    driver: local
