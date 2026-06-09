@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+# =============================================================================
+# setup.sh — SocioEcoInsight · Deploy Inicial · Ubuntu 24.04 LTS
+# Execute como root: bash setup.sh
+# =============================================================================
+set -euo pipefail   # Aborta em qualquer erro; variáveis não definidas causam erro
+
+# -----------------------------------------------------------------------------
+# 1. ATUALIZAR APT E INSTALAR DEPENDÊNCIAS DO SISTEMA
+# -----------------------------------------------------------------------------
+echo "[1/6] Atualizando pacotes do sistema..."
+apt update && apt upgrade -y
+
+echo "[2/6] Instalando dependências de sistema..."
+apt install -y \
+    python3-pip \
+    python3-venv \
+    python3-dev \
+    build-essential \
+    libpq-dev \
+    nginx \
+    git \
+    certbot \
+    python3-certbot-nginx \
+    ufw
+
+# -----------------------------------------------------------------------------
+# 2. CONFIGURAR FIREWALL (UFW)
+# Permite apenas SSH, HTTP e HTTPS — bloqueia todo o resto.
+# -----------------------------------------------------------------------------
+echo "[3/6] Configurando UFW..."
+ufw allow OpenSSH
+ufw allow 'Nginx Full'   # Abre portas 80 (HTTP) e 443 (HTTPS)
+ufw --force enable
+
+# -----------------------------------------------------------------------------
+# 3. CLONAR O REPOSITÓRIO
+# Substitua [URL_DO_REPOSITORIO] pela URL real do seu repositório Git.
+# Ex: https://github.com/seuusuario/SocioEcoInsight.git
+# -----------------------------------------------------------------------------
+echo "[4/6] Clonando repositório..."
+APP_DIR="/opt/socioeco"
+git clone [URL_DO_REPOSITORIO] "$APP_DIR"
+cd "$APP_DIR"
+
+# -----------------------------------------------------------------------------
+# 4. CRIAR AMBIENTE VIRTUAL E INSTALAR DEPENDÊNCIAS PYTHON
+# -----------------------------------------------------------------------------
+echo "[5/6] Criando virtualenv e instalando requirements..."
+python3 -m venv "$APP_DIR/venv"
+source "$APP_DIR/venv/bin/activate"
+
+# Atualiza pip e instala gunicorn + dependências do projeto
+pip install --upgrade pip
+pip install gunicorn
+pip install -r "$APP_DIR/requirements.txt"
+
+# -----------------------------------------------------------------------------
+# 5. CRIAR O ARQUIVO .env
+# ATENÇÃO: Nunca commite este arquivo no Git.
+# Preencha TODOS os valores abaixo antes de continuar.
+# -----------------------------------------------------------------------------
+echo "[6/6] Gerando template do .env — EDITE ANTES DE CONTINUAR!"
+cat > "$APP_DIR/.env" << 'EOF'
+# =============================================
+#  ATENÇÃO: Arquivo de segredos de produção.
+#  Nunca versionar este arquivo.
+# =============================================
+
+# Django Core
+SECRET_KEY=[GERE_UMA_SECRET_KEY_FORTE_AQUI]
+DEBUG=False
+ALLOWED_HOSTS=[SEU_DOMINIO_AQUI],www.[SEU_DOMINIO_AQUI]
+
+# Banco de Dados — Supabase PostgreSQL 16
+# Formato: postgres://usuario:senha@host:5432/nome_do_banco
+DATABASE_URL=[SUA_DATABASE_URL_DO_SUPABASE_AQUI]
+
+# Groq API
+GROQ_API_KEY=[SUA_GROQ_API_KEY_AQUI]
+GROQ_MODEL=llama-3.3-70b-versatile
+
+# OpenAI (se utilizado como fallback no orchestrator)
+OPENAI_API_KEY=[SUA_OPENAI_API_KEY_AQUI]
+
+# Django Static Files (collectstatic output)
+STATIC_ROOT=/opt/socioeco/staticfiles
+EOF
+
+echo "------------------------------------------------------------"
+echo "  EDITE O ARQUIVO /opt/socioeco/.env com seus valores reais!"
+echo "  Execute o próximo bloco SOMENTE após editar o .env."
+echo "------------------------------------------------------------"
+
+# -----------------------------------------------------------------------------
+# 6. COLLECTSTATIC
+# Execute manualmente APÓS editar o .env com os valores reais.
+# -----------------------------------------------------------------------------
+# source /opt/socioeco/venv/bin/activate
+# cd /opt/socioeco
+# python manage.py collectstatic --noinput
+
+echo ""
+echo "=== setup.sh concluído. Edite o .env e rode collectstatic. ==="

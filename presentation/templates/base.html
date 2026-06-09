@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="pt-br" class="h-full">
 <head>
     <meta charset="UTF-8">
@@ -58,6 +59,8 @@
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1" defer></script>
 
     <!-- Estilos globais -->
     <style>
@@ -140,9 +143,8 @@
             <a href="{% url 'dashboard' %}"
                id="nav-dashboard"
                title="Visão geral das métricas socioeconômicas"
-               class="sidebar-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300
-                      hover:bg-sidebar-hover hover:text-white transition-colors duration-150 group
-                      {% block nav_dashboard_active %}{% endblock %}"
+               class="sidebar-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors duration-150 group
+                      {% if active_metric == 'dashboard' %}bg-sidebar-active text-white{% else %}text-slate-300 hover:bg-sidebar-hover hover:text-white{% endif %}"
                aria-label="Dashboard principal">
                 <svg class="sidebar-icon w-4 h-4 flex-shrink-0 text-slate-400 group-hover:text-primary-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 13a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z"/>
@@ -154,8 +156,8 @@
             <a href="?metric=miseria"
                id="nav-miseria"
                title="Análise detalhada do Índice de Miséria (Inflação + Desemprego)"
-               class="sidebar-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400
-                      hover:bg-sidebar-hover hover:text-white transition-colors duration-150 group"
+               class="sidebar-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors duration-150 group
+                      {% if active_metric == 'miseria' %}bg-sidebar-active text-white{% else %}text-slate-400 hover:bg-sidebar-hover hover:text-white{% endif %}"
                aria-label="Índice de Miséria">
                 <svg class="sidebar-icon w-4 h-4 flex-shrink-0 text-slate-500 group-hover:text-amber-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
@@ -167,8 +169,8 @@
             <a href="?metric=ipca"
                id="nav-ipca"
                title="Acompanhamento do Índice Nacional de Preços ao Consumidor Amplo (Inflação)"
-               class="sidebar-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400
-                      hover:bg-sidebar-hover hover:text-white transition-colors duration-150 group"
+               class="sidebar-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors duration-150 group
+                      {% if active_metric == 'ipca' %}bg-sidebar-active text-white{% else %}text-slate-400 hover:bg-sidebar-hover hover:text-white{% endif %}"
                aria-label="IPCA">
                 <svg class="sidebar-icon w-4 h-4 flex-shrink-0 text-slate-500 group-hover:text-emerald-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
@@ -180,8 +182,8 @@
             <a href="?metric=desemprego"
                id="nav-desemprego"
                title="Evolução da taxa de desemprego baseada na PNAD Contínua"
-               class="sidebar-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400
-                      hover:bg-sidebar-hover hover:text-white transition-colors duration-150 group"
+               class="sidebar-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors duration-150 group
+                      {% if active_metric == 'desemprego' %}bg-sidebar-active text-white{% else %}text-slate-400 hover:bg-sidebar-hover hover:text-white{% endif %}"
                aria-label="Desemprego">
                 <svg class="sidebar-icon w-4 h-4 flex-shrink-0 text-slate-500 group-hover:text-rose-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -193,7 +195,20 @@
                 Sistema
             </p>
 
-            <!-- Documentação -->
+            <!-- Sobre -->
+            <a href="{% url 'about' %}"
+               id="nav-about"
+               title="Informações sobre o dashboard e as fontes de dados"
+               class="sidebar-nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors duration-150 group
+                      {% if active_metric == 'about' %}bg-sidebar-active text-white{% else %}text-slate-400 hover:bg-sidebar-hover hover:text-white{% endif %}"
+               aria-label="Sobre o Dashboard">
+                <svg class="sidebar-icon w-4 h-4 flex-shrink-0 text-slate-500 group-hover:text-indigo-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="sidebar-label text-sm font-medium">Sobre</span>
+            </a>
+
+            <!-- Documentação / Administração -->
             <a href="/admin/"
                id="nav-admin"
                title="Acesso ao painel administrativo do sistema para gestão de dados"
@@ -249,6 +264,14 @@
 
             <!-- Ações da Topbar -->
             <div class="flex items-center gap-3">
+
+                <!-- Logo Institucional -->
+                <div class="hidden sm:flex items-center gap-2 pr-3 border-r border-slate-200 dark:border-slate-800">
+                    <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Apresentado à</span>
+                    <div class="bg-white px-2.5 py-1 rounded-md shadow-sm border border-slate-100 dark:border-none" title="UniSENAI MT">
+                        <img src="{% static 'img/unisenai.svg' %}" alt="UniSENAI MT" class="h-4 object-contain">
+                    </div>
+                </div>
 
                 <!-- Toggle Dark Mode -->
                 <button id="dark-mode-toggle"
@@ -433,6 +456,7 @@
             mobilePanel.style.transform   = 'translateY(100%)';
             mobileBackdrop.classList.add('hidden');
             document.body.style.overflow  = '';
+        }
     }
 
     // ─── Funções Globais do Chat ──────────────────────────────
@@ -445,12 +469,13 @@
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             const form = document.getElementById('chat-form-' + chatId);
-            if (form && form.querySelector('[name="query"]').value.trim()) {
-                const submitBtn = form.querySelector('button[type="submit"]');
-                if (submitBtn) {
-                    submitBtn.click();
+            const input = form ? form.querySelector('[name="query"]') : null;
+            if (form && input && input.value.trim()) {
+                // Use HTMX's native trigger for reliable submission
+                if (typeof htmx !== 'undefined') {
+                    htmx.trigger(form, 'submit');
                 } else {
-                    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                    form.requestSubmit();
                 }
             }
         }
@@ -458,20 +483,23 @@
 
     function toggleDesktopChat(chatId) {
         const messages = document.getElementById('chat-messages-' + chatId);
-        const formContainer = document.getElementById('chat-form-' + chatId).parentElement;
+        const formWrapper = document.getElementById('chat-form-' + chatId);
+        const formContainer = formWrapper ? formWrapper.parentElement : null;
         const suggestions = document.getElementById('suggestions-' + chatId);
         const icon = document.querySelector('#toggle-chat-btn-' + chatId + ' svg');
         
+        if (!messages) return;
+
         if (messages.style.display === 'none') {
             messages.style.display = '';
-            formContainer.style.display = '';
+            if (formContainer) formContainer.style.display = '';
             if (suggestions && suggestions.dataset.hidden !== 'true') {
                 suggestions.style.display = '';
             }
             if (icon) icon.style.transform = 'rotate(0deg)';
         } else {
             messages.style.display = 'none';
-            formContainer.style.display = 'none';
+            if (formContainer) formContainer.style.display = 'none';
             if (suggestions) {
                 if (suggestions.style.display === 'none') {
                     suggestions.dataset.hidden = 'true';
@@ -494,7 +522,7 @@
         const suggestions = document.getElementById('suggestions-' + chatId);
         if (suggestions) suggestions.style.display = 'none';
         
-        setTimeout(() => {
+        setTimeout(function() {
             if (messages) messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' });
         }, 100);
     }
@@ -511,13 +539,23 @@
     function clearChat(chatId) {
         const messages = document.getElementById('chat-messages-' + chatId);
         if (messages) {
-            Array.from(messages.children).forEach(child => {
+            Array.from(messages.children).forEach(function(child) {
                 if (child.id !== 'welcome-' + chatId) child.remove();
             });
         }
         const suggestions = document.getElementById('suggestions-' + chatId);
         if (suggestions) suggestions.style.display = '';
     }
+
+    // ─── Fallback: HTMX afterRequest listener ────────────────
+    // Ensures input clears even if the inline hx-on attribute fails
+    document.addEventListener('htmx:afterRequest', function(evt) {
+        var form = evt.detail.elt;
+        if (form && form.id && form.id.startsWith('chat-form-')) {
+            var chatId = form.id.replace('chat-form-', '');
+            onChatAfterRequest(chatId);
+        }
+    });
 </script>
 
 {% block extra_scripts %}{% endblock %}

@@ -31,10 +31,12 @@ class Command(BaseCommand):
         dados_novos.extend(self._fetch_and_transform(desemprego_url, 'Desemprego'))
 
         if dados_novos:
-            # Salvar no banco em lote com ignore_conflicts=True para evitar duplicidade
+            # Salvar no banco em lote com update_conflicts=True para atualizar se houver correção do IBGE
             MetricaSocioEconomica.objects.bulk_create(
                 dados_novos,
-                ignore_conflicts=True
+                update_conflicts=True,
+                unique_fields=['data', 'tipo_metrica', 'regiao', 'estado'],
+                update_fields=['valor']
             )
             self.stdout.write(self.style.SUCCESS(f'Ingestão concluída. {len(dados_novos)} registros processados.'))
         else:

@@ -16,6 +16,12 @@ class MetricaSocioEconomica(models.Model):
             models.Index(fields=['data', 'tipo_metrica'], name='idx_data_tipo'),
             models.Index(fields=['tipo_metrica'], name='idx_tipo'),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['data', 'tipo_metrica', 'regiao', 'estado'],
+                name='unique_metrica_por_data_regiao'
+            )
+        ]
 
     def __str__(self):
         return f"{self.tipo_metrica} - {self.data} - {self.valor}"

@@ -9,7 +9,8 @@ def index(request):
     Calcula o "Índice de Miséria" (Inflação + Desemprego) e variações.
     """
     metricas = MetricaSocioEconomica.objects.filter(
-        tipo_metrica__in=['IPCA', 'Desemprego']
+        tipo_metrica__in=['IPCA', 'Desemprego'],
+        regiao='Brasil'
     ).order_by('data')
 
     historico = {}
@@ -49,6 +50,7 @@ def index(request):
         variacao = ((indice_miseria_atual - indice_miseria_anterior) / indice_miseria_anterior) * 100
 
     context = {
+        'active_metric': request.GET.get('metric', 'dashboard'),
         'indice_miseria_atual': f"{indice_miseria_atual:.2f}",
         'variacao': f"{variacao:.2f}",
         'chart_data_json': json.dumps({

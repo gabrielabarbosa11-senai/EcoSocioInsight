@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Sobre o Dashboard{% endblock %}
+{% block page_title %}Sobre / O que é?{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-8 sm:p-10 mb-8">
+    <div class="mb-8 border-b border-slate-100 dark:border-slate-800 pb-6">
+        <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-3">
+            SocioEcoInsight
+        </h1>
+        <p class="text-base text-slate-500 dark:text-slate-400">
+            Monitoramento inteligente e análise interativa da economia brasileira.
+        </p>
+    </div>
+
+    <div class="space-y-8 text-slate-700 dark:text-slate-300 leading-relaxed">
+        
+        <!-- Objetivo -->
+        <section>
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center flex-shrink-0 text-primary-600 dark:text-primary-400">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">Objetivo</h2>
+            </div>
+            <p class="pl-11">
+                O <strong>SocioEcoInsight</strong> é um painel analítico (dashboard) focado em centralizar e simplificar a visualização de métricas socioeconômicas críticas do Brasil, como a <strong>Inflação (IPCA)</strong> e a <strong>Taxa de Desemprego (PNAD)</strong>, além de calcular indicadores compostos como o Índice de Miséria. O objetivo é fornecer uma ferramenta acessível para entender a conjuntura econômica em tempo real.
+            </p>
+        </section>
+
+        <!-- Fonte de Dados -->
+        <section>
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center flex-shrink-0 text-emerald-600 dark:text-emerald-400">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">Fonte dos Dados (SIDRA API)</h2>
+            </div>
+            <p class="pl-11">
+                Todos os dados exibidos são oficiais e extraídos diretamente do <a href="https://apisidra.ibge.gov.br/" target="_blank" class="text-primary-600 dark:text-primary-400 hover:underline" title="Ir para o portal SIDRA">Sistema IBGE de Recuperação Automática (SIDRA)</a>. A integração contínua garante que as informações reflitam as mais recentes divulgações do IBGE sobre a economia nacional de forma transparente e precisa.
+            </p>
+        </section>
+
+        <!-- Agente IA -->
+        <section>
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center flex-shrink-0 text-indigo-600 dark:text-indigo-400">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">O Agente Assistente (IA)</h2>
+            </div>
+            <p class="pl-11">
+                Para ajudar na interpretação dos dados, o painel conta com um <strong>Agente Inteligente baseado em RAG</strong> (Retrieval-Augmented Generation). Ele possui acesso à base histórica do dashboard e aos documentos metodológicos do IBGE. Você pode interagir com o agente através do chat lateral para fazer perguntas sobre tendências, comparar índices ou entender conceitos econômicos complexos de forma simples e direta.
+            </p>
+        </section>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block chat_panel %}
+    {% with chat_id="main" %}
+        {% include "chat_component.html" %}
+    {% endwith %}
+{% endblock %}
+
+{% block mobile_chat_panel %}
+    {% with chat_id="mobile" %}
+        {% include "chat_component.html" %}
+    {% endwith %}
+{% endblock %}
