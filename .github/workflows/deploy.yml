@@ -1,0 +1,63 @@
+name: Deploy SocioEcoInsight to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # (Opcional) Passo para rodar testes antes do deploy.
+      # Se você quiser ativar testes automáticos no GitHub Actions, descomente este bloco.
+      # Nota: Exige configurar DATABASE_URL de teste ou usar SQLite no settings.py.
+      # - name: Set up Python
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: '3.12'
+      # - name: Install Dependencies
+      #   run: |
+      #     python -m pip install --upgrade pip
+      #     pip install -r requirements.txt
+      # - name: Run Tests
+      #   env:
+      #     DATABASE_URL: sqlite:///:memory: # Usa SQLite em memória para testes rápidos
+      #     SECRET_KEY: test_secret_key
+      #     DEBUG: True
+      #   run: |
+      #     python manage.py test
+
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            echo "Starting deployment to /opt/socioeco..."
+            cd /opt/socioeco
+            
+            # 1. Obter o código mais recente do GitHub
+            git fetch --all
+            git reset --hard origin/main
+            
+            # 2. Ativar o venv e instalar novas dependências (se houver)
+            source venv/bin/activate
+            pip install -r requirements.txt
+            
+            # 3. Rodar migrações do banco de dados (Supabase)
+            python manage.py migrate --noinput
+            
+            # 4. Coletar arquivos estáticos (CSS, JS)
+            python manage.py collectstatic --noinput
+            
+            # 5. Reiniciar o serviço Gunicorn para carregar o novo código
+            systemctl restart gunicorn
+            
+            echo "Deployment finished successfully!"

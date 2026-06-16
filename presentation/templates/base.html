@@ -412,10 +412,54 @@
     {% endblock %}
 </div>
 
+<!-- ══════════════════════════════════════
+     MODAL DE ALERTA DE AUTENTICAÇÃO (Mobile/Geral)
+     ══════════════════════════════════════ -->
+<div id="auth-warning-modal"
+     class="fixed inset-0 z-[100] flex items-center justify-center p-4 hidden"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="auth-warning-title">
+    
+    <!-- Backdrop do modal de alerta -->
+    <div onclick="closeAuthWarningModal()"
+         class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity">
+    </div>
+
+    <!-- Conteúdo do modal de alerta -->
+    <div class="relative bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 scale-95 transition-all duration-300">
+        
+        <!-- Ícone de Alerta -->
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-950/50 mb-4">
+            <svg class="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+        </div>
+
+        <!-- Título -->
+        <h3 id="auth-warning-title" class="text-center text-base font-bold text-slate-900 dark:text-white mb-2">
+            Acesso Restrito
+        </h3>
+
+        <!-- Mensagem de erro -->
+        <p class="text-center text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
+            Somente usuários credenciados podem interagir com o Agente de IA. Por favor entre em contato com o administrador, ou <a href="/admin/" class="text-sky-500 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-300 font-semibold transition-colors duration-150"><u>faça login</u></a>.
+        </p>
+
+        <!-- Botão Fechar -->
+        <button onclick="closeAuthWarningModal()"
+                class="w-full py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500/20 active:scale-[0.98]">
+            Fechar
+        </button>
+    </div>
+</div>
+
 <!-- ══════════════════════
      SCRIPTS GLOBAIS
      ══════════════════════ -->
 <script>
+    // ─── Estado de Autenticação ──────────────────────────────
+    const IS_AUTHENTICATED = {% if request.user.is_authenticated %}true{% else %}false{% endif %};
     // ─── Dark Mode ───────────────────────────────────────────
     const htmlEl = document.documentElement;
     const sunIcon  = document.getElementById('icon-sun');
@@ -501,7 +545,41 @@
     const mobileBackdrop = document.getElementById('mobile-chat-backdrop');
     let chatOpen = false;
 
+    function openAuthWarningModal() {
+        const modal = document.getElementById('auth-warning-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            const content = modal.querySelector('.relative');
+            if (content) {
+                setTimeout(() => {
+                    content.classList.remove('scale-95');
+                    content.classList.add('scale-100');
+                }, 10);
+            }
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeAuthWarningModal() {
+        const modal = document.getElementById('auth-warning-modal');
+        if (modal) {
+            const content = modal.querySelector('.relative');
+            if (content) {
+                content.classList.remove('scale-100');
+                content.classList.add('scale-95');
+            }
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 150);
+            document.body.style.overflow = '';
+        }
+    }
+
     function toggleMobileChat() {
+        if (!IS_AUTHENTICATED) {
+            openAuthWarningModal();
+            return;
+        }
         chatOpen = !chatOpen;
         if (chatOpen) {
             mobilePanel.style.transform   = 'translateY(0)';
@@ -601,6 +679,64 @@
         const suggestions = document.getElementById('suggestions-' + chatId);
         if (suggestions) suggestions.style.display = '';
     }
+
+    // ─── Interceptador de Autenticação (Desktop) ─────────────
+    document.addEventListener('htmx:configRequest', function(evt) {
+        const form = evt.detail.elt;
+        if (form && form.id && form.id.startsWith('chat-form-')) {
+            if (!IS_AUTHENTICATED) {
+                evt.preventDefault(); // Impede o envio HTMX
+                
+                const chatId = form.id.replace('chat-form-', '');
+                const input = document.getElementById('input-' + chatId);
+                const messages = document.getElementById('chat-messages-' + chatId);
+                
+                if (input && messages) {
+                    const query = input.value.trim();
+                    if (query) {
+                        // Função auxiliar simples para sanitizar caracteres e evitar XSS
+                        const escapeHtml = (text) => text
+                            .replace(/&/g, "&amp;")
+                            .replace(/</g, "&lt;")
+                            .replace(/>/g, "&gt;")
+                            .replace(/"/g, "&quot;")
+                            .replace(/'/g, "&#039;");
+                        
+                        // 1. Injeta a mensagem do usuário (para dar feedback visual)
+                        const userMsgHtml = `
+                            <div class="self-end bg-indigo-100 border border-indigo-200 dark:bg-indigo-950/40 dark:border-indigo-800/50 rounded-2xl rounded-tr-none p-3 max-w-[85%] shadow-sm ml-auto text-right">
+                                <p class="text-sm text-indigo-900 dark:text-indigo-200">${escapeHtml(query)}</p>
+                            </div>
+                        `;
+                        messages.insertAdjacentHTML('beforeend', userMsgHtml);
+                        
+                        // 2. Injeta a mensagem de bloqueio (erro) com o link em português
+                        const errorMsgHtml = `
+                            <div class="self-start bg-red-50 border border-red-200 dark:bg-red-950/20 dark:border-red-900/50 rounded-2xl rounded-tl-none p-3 max-w-[85%] shadow-sm mt-2">
+                                <div class="text-sm text-red-800 dark:text-red-300 space-y-2">
+                                    <p>Somente usuários credenciados podem interagir com o Agente de IA. Por favor entre em contato com o administrador, ou <a href="/admin/" class="text-sky-500 hover:text-sky-600 dark:text-sky-400 dark:hover:text-sky-300 font-semibold transition-colors duration-150"><u>faça login</u></a>.</p>
+                                </div>
+                            </div>
+                        `;
+                        messages.insertAdjacentHTML('beforeend', errorMsgHtml);
+                        
+                        // Oculta sugestões rápidas se houver
+                        const suggestions = document.getElementById('suggestions-' + chatId);
+                        if (suggestions) suggestions.style.display = 'none';
+
+                        // 3. Limpa e reinicia o input
+                        input.value = '';
+                        input.style.height = 'auto';
+                        
+                        // 4. Scroll suave para o fim do container de mensagens
+                        setTimeout(function() {
+                            messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' });
+                        }, 50);
+                    }
+                }
+            }
+        }
+    });
 
     // ─── Fallback: HTMX afterRequest listener ────────────────
     // Ensures input clears even if the inline hx-on attribute fails
