@@ -218,7 +218,7 @@
     </div>
 
     <!-- Canvas do Gráfico -->
-    <div class="p-6" style="position: relative; height: 340px;">
+    <div class="px-4 sm:px-6 pb-4 sm:pb-6 pt-2" id="chart-canvas-wrapper" style="position: relative;">
         <canvas id="historicoChart" role="img" aria-label="Gráfico histórico de métricas socioeconômicas"></canvas>
     </div>
 </div>
@@ -401,7 +401,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         color: getTickColor(),
                         font: { size: 11, family: 'Inter' },
                         maxRotation: 45,
-                        maxTicksLimit: 12,
+                        maxTicksLimit: window.innerWidth < 640 ? 5 : 12,
                     },
                 },
                 y: {

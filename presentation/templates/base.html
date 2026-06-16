@@ -7,6 +7,9 @@
     <meta name="description" content="SocioEcoInsight — Painel analítico de métricas socioeconômicas do Brasil baseado nos dados do IBGE.">
     <title>{% block title %}SocioEcoInsight{% endblock %} | Painel Analítico</title>
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+
     <!-- TailwindCSS CDN com configuração de dark mode e tema customizado -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -75,17 +78,26 @@
         .htmx-request .htmx-indicator,
         .htmx-request.htmx-indicator { display: flex !important; }
 
-        /* Sidebar collapsed state */
-        #sidebar.collapsed { width: 4rem; }
-        #sidebar.collapsed .sidebar-label,
-        #sidebar.collapsed .sidebar-logo-text,
-        #sidebar.collapsed .sidebar-section-title { display: none; }
-        #sidebar.collapsed .sidebar-nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
-        #sidebar.collapsed .sidebar-icon { margin-right: 0; }
+        /* Sidebar collapsed state — desktop only */
+        @media (min-width: 1024px) {
+            #sidebar.collapsed { width: 4rem; }
+            #sidebar.collapsed .sidebar-label,
+            #sidebar.collapsed .sidebar-logo-text,
+            #sidebar.collapsed .sidebar-section-title { display: none; }
+            #sidebar.collapsed .sidebar-nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+            #sidebar.collapsed .sidebar-icon { margin-right: 0; }
+        }
 
         /* Transições suaves */
-        #sidebar { transition: width 0.25s cubic-bezier(0.4,0,0.2,1); }
+        #sidebar { transition: transform 0.3s ease-in-out, width 0.25s cubic-bezier(0.4,0,0.2,1); }
         #main-area { transition: margin-left 0.25s cubic-bezier(0.4,0,0.2,1); }
+
+        /* Touch — remove 300ms delay on iOS/Android */
+        button, a { touch-action: manipulation; }
+
+        /* Responsive chart height */
+        #chart-canvas-wrapper { height: 220px; }
+        @media (min-width: 640px) { #chart-canvas-wrapper { height: 340px; } }
 
         /* Skeleton loader */
         .skeleton {
@@ -115,8 +127,9 @@
          SIDEBAR — Navegação lateral
          ══════════════════════════════ -->
     <aside id="sidebar"
-           class="w-64 bg-sidebar flex flex-col flex-shrink-0 overflow-hidden z-30
-                  border-r border-sidebar-border"
+           class="fixed inset-y-0 left-0 w-64 bg-sidebar flex flex-col flex-shrink-0 overflow-hidden z-40
+                  border-r border-sidebar-border
+                  -translate-x-full lg:relative lg:translate-x-0 lg:z-30"
            aria-label="Navegação principal">
 
         <!-- Logo / Identidade -->
@@ -239,6 +252,13 @@
     </aside>
     <!-- /SIDEBAR -->
 
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebar-backdrop"
+         onclick="closeMobileSidebar()"
+         class="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 hidden lg:hidden"
+         aria-hidden="true">
+    </div>
+
     <!-- ══════════════════════════════════════════
          ÁREA PRINCIPAL: Topbar + Conteúdo + Chat
          ══════════════════════════════════════════ -->
@@ -253,11 +273,22 @@
 
             <!-- Breadcrumb / Título da página -->
             <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <!-- Hamburger — mobile only -->
+                <button id="mobile-menu-btn"
+                        onclick="openMobileSidebar()"
+                        aria-label="Abrir menu lateral"
+                        class="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg flex-shrink-0
+                               text-slate-500 hover:text-slate-700 dark:hover:text-slate-200
+                               hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                <svg class="w-4 h-4 text-slate-400 hidden sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                 </svg>
-                <span class="text-slate-400">/</span>
-                <span class="font-semibold text-slate-700 dark:text-slate-200">
+                <span class="text-slate-400 hidden sm:inline">/</span>
+                <span class="font-semibold text-slate-700 dark:text-slate-200 text-sm truncate">
                     {% block page_title %}Dashboard{% endblock %}
                 </span>
             </div>
@@ -418,9 +449,33 @@
     // ─── Sidebar Toggle ──────────────────────────────────────
     const sidebar = document.getElementById('sidebar');
     const toggleIcon = document.getElementById('sidebar-toggle-icon');
+    const sidebarBackdrop = document.getElementById('sidebar-backdrop');
     let sidebarCollapsed = false;
 
+    // Mobile drawer: open
+    function openMobileSidebar() {
+        sidebar.classList.remove('-translate-x-full');
+        if (sidebarBackdrop) sidebarBackdrop.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    // Mobile drawer: close
+    function closeMobileSidebar() {
+        sidebar.classList.add('-translate-x-full');
+        if (sidebarBackdrop) sidebarBackdrop.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    // Auto-close sidebar on nav link click (mobile)
+    sidebar.querySelectorAll('a[href]').forEach(function(link) {
+        link.addEventListener('click', function() {
+            if (window.innerWidth < 1024) closeMobileSidebar();
+        });
+    });
+
+    // Desktop collapse toggle — no-op on mobile
     function toggleSidebar() {
+        if (window.innerWidth < 1024) { closeMobileSidebar(); return; }
         sidebarCollapsed = !sidebarCollapsed;
         sidebar.classList.toggle('collapsed', sidebarCollapsed);
         if (sidebarCollapsed) {
@@ -433,9 +488,9 @@
         localStorage.setItem('sidebarCollapsed', sidebarCollapsed);
     }
 
-    // Restaura estado da sidebar
+    // Restaura estado da sidebar (desktop only)
     (function () {
-        if (localStorage.getItem('sidebarCollapsed') === 'true') {
+        if (window.innerWidth >= 1024 && localStorage.getItem('sidebarCollapsed') === 'true') {
             toggleSidebar();
         }
     })();
