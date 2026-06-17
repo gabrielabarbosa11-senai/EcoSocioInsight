@@ -51,3 +51,7 @@ OPENAI_API_KEY=sk-sua_chave_aqui
 python manage.py runserver
 ```
 Acesse `http://127.0.0.1:8000/` no seu navegador.
+
+
+# Acesse o site: 
+### https://socioecoinsight.com.br/
