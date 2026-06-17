@@ -1,6 +1,7 @@
 # SocioEcoInsight
 
-O **SocioEcoInsight** é uma plataforma analítica projetada para monitorar e explorar métricas socioeconômicas do Brasil em tempo real (como IPCA, Desemprego e o Índice de Miséria). Além dos gráficos interativos, o painel integra um chat com Inteligência Artificial (RAG Multi-Agente) capaz de responder perguntas complexas baseadas nos dados e metodologias oficiais do IBGE.
+O **SocioEcoInsight** é uma plataforma analítica projetada para monitorar e explorar métricas socioeconômicas do Brasil em tempo real (como IPCA, Desemprego e o Índice de Miséria). Todos os dados exibidos são oficiais e extraídos diretamente do [Sistema IBGE de Recuperação Automática (SIDRA)](https://apisidra.ibge.gov.br/).
+Além dos gráficos interativos, o painel integra um chat com Inteligência Artificial (RAG Multi-Agente) capaz de responder perguntas complexas baseadas nos dados e metodologias oficiais do IBGE.
 
 ---
 
