@@ -13,7 +13,9 @@ O projeto foi construído focando em robustez no backend e reatividade no fronte
 *   **HTMX:** Traz reatividade ao frontend. Permite que o chat da IA e as interações do painel funcionem de forma assíncrona (sem recarregar a página) apenas trocando pedaços do HTML diretamente com o Django.
 *   **TailwindCSS & Chart.js:** Utilizados para construir um "Admin Dashboard" moderno, responsivo (com suporte a Dark Mode) e plotar gráficos ricos das séries históricas.
 
----
+
+<img width="1024" height="1024" alt="socioeconomica_architecture_diagram_1778946791138" src="https://github.com/user-attachments/assets/4e1b7d0c-f5b5-4105-98a3-c5ddbf4959dd" />
+
 
 ## 🚀 Como Rodar o Projeto Localmente
 
