@@ -12,12 +12,16 @@
 
 <!-- Cabeçalho da Página -->
 <div class="mb-8">
-    <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
-        Painel SocioEcoInsight
-    </h1>
-    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-        Monitoramento em tempo real da economia brasileira · Fonte: IBGE / SIDRA API
-    </p>
+    {% if active_metric == 'ipca' %}
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">IPCA · Inflação</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Variação acumulada em 12 meses · IBGE / SIDRA Tabela 1737</p>
+    {% elif active_metric == 'desemprego' %}
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Desemprego · PNAD Contínua</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Taxa de desocupação trimestral · IBGE / SIDRA Tabela 6381</p>
+    {% else %}
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Painel SocioEcoInsight</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Monitoramento em tempo real da economia brasileira · Fonte: IBGE / SIDRA API</p>
+    {% endif %}
 </div>
 
 <!-- ═══════════════════════════════════
@@ -25,87 +29,213 @@
      ═══════════════════════════════════ -->
 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
 
-    <!-- KPI 1: Índice de Miséria -->
-    <div class="relative bg-white dark:bg-slate-900
-                rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800
-                p-5 flex flex-col gap-4 hover:shadow-md transition-shadow duration-200 group cursor-pointer"
-         id="card-miseria" onclick="toggleDataset(0)">
+{% if active_metric == 'ipca' %}
 
-        <!-- Badge de tendência -->
+    {# ── IPCA: Card 1 — Valor atual ── #}
+    <div class="relative bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 flex flex-col gap-4 hover:shadow-md transition-shadow duration-200 group cursor-pointer"
+         onclick="toggleDataset(1)">
         <div class="flex items-start justify-between">
             <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-950/50
-                            flex items-center justify-center flex-shrink-0">
+                <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                    </svg>
+                </div>
+                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">IPCA Acumulado 12M</span>
+            </div>
+            {% if ipca_variacao|stringformat:"s"|slice:":1" == "-" %}
+                <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full" title="Variação vs período anterior">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    {{ ipca_variacao }}%
+                </span>
+            {% else %}
+                <span class="inline-flex items-center gap-1 text-xs font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 px-2 py-0.5 rounded-full" title="Variação vs período anterior">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
+                    +{{ ipca_variacao }}%
+                </span>
+            {% endif %}
+        </div>
+        <div>
+            <span class="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">{{ ipca_atual }}<span class="text-xl font-semibold text-slate-400 ml-0.5">%</span></span>
+            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1.5">Referência: {{ ipca_ref }}</p>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 h-0.5 rounded-b-2xl bg-gradient-to-r from-emerald-400 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+    </div>
+
+    {# ── IPCA: Card 2 — O que é ── #}
+    <div class="relative overflow-hidden bg-gradient-to-br from-emerald-700 to-teal-900 rounded-2xl shadow-lg p-5 flex flex-col gap-4">
+        <div class="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/5"></div>
+        <div class="absolute -bottom-8 -left-4 w-32 h-32 rounded-full bg-white/5"></div>
+        <div class="relative z-10">
+            <span class="text-xs font-semibold text-emerald-200 uppercase tracking-wider">Sobre o Indicador</span>
+        </div>
+        <div class="relative z-10 flex flex-col gap-3 text-sm text-emerald-100">
+            <div class="flex items-start gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 flex-shrink-0 mt-1.5"></span>
+                <span>Mede a variação de preços para o consumidor final no Brasil</span>
+            </div>
+            <div class="flex items-start gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 flex-shrink-0 mt-1.5"></span>
+                <span>Calculado mensalmente pelo IBGE desde 1979</span>
+            </div>
+            <div class="flex items-start gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 flex-shrink-0 mt-1.5"></span>
+                <span>Meta do Banco Central: 3,0% a.a. (±1,5 pp)</span>
+            </div>
+        </div>
+        <div class="relative z-10 text-xs text-emerald-300 mt-1">SIDRA Tabela 1737 · Var. 63</div>
+    </div>
+
+    {# ── IPCA: Card 3 — Fonte ── #}
+    <div class="relative bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 flex flex-col gap-4 hover:shadow-md transition-shadow duration-200 group sm:col-span-2 xl:col-span-1">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-sky-100 dark:bg-sky-950/50 flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4 text-sky-600 dark:text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            </div>
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Fonte dos Dados</span>
+        </div>
+        <div class="space-y-2">
+            <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
+                <span class="text-sm text-slate-700 dark:text-slate-300 font-medium">IBGE · <a href="https://apisidra.ibge.gov.br/" target="_blank" class="text-primary-600 hover:underline dark:text-primary-400">SIDRA API</a></span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-sky-500 flex-shrink-0"></span>
+                <span class="text-sm text-slate-700 dark:text-slate-300 font-medium">Frequência: mensal</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-primary-500 flex-shrink-0"></span>
+                <span class="text-sm text-slate-700 dark:text-slate-300 font-medium">Cobertura: Brasil (nacional)</span>
+            </div>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 h-0.5 rounded-b-2xl bg-gradient-to-r from-emerald-400 to-sky-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+    </div>
+
+{% elif active_metric == 'desemprego' %}
+
+    {# ── Desemprego: Card 1 — Valor atual ── #}
+    <div class="relative bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 flex flex-col gap-4 hover:shadow-md transition-shadow duration-200 group cursor-pointer"
+         onclick="toggleDataset(2)">
+        <div class="flex items-start justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-950/50 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </div>
+                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Taxa de Desocupação</span>
+            </div>
+            {% if desemp_variacao|stringformat:"s"|slice:":1" == "-" %}
+                <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full" title="Variação vs trimestre anterior">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    {{ desemp_variacao }}%
+                </span>
+            {% else %}
+                <span class="inline-flex items-center gap-1 text-xs font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 px-2 py-0.5 rounded-full" title="Variação vs trimestre anterior">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
+                    +{{ desemp_variacao }}%
+                </span>
+            {% endif %}
+        </div>
+        <div>
+            <span class="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">{{ desemp_atual }}<span class="text-xl font-semibold text-slate-400 ml-0.5">%</span></span>
+            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1.5">Referência: {{ desemp_ref }}</p>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 h-0.5 rounded-b-2xl bg-gradient-to-r from-amber-400 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+    </div>
+
+    {# ── Desemprego: Card 2 — O que é ── #}
+    <div class="relative overflow-hidden bg-gradient-to-br from-amber-700 to-orange-900 rounded-2xl shadow-lg p-5 flex flex-col gap-4">
+        <div class="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/5"></div>
+        <div class="absolute -bottom-8 -left-4 w-32 h-32 rounded-full bg-white/5"></div>
+        <div class="relative z-10">
+            <span class="text-xs font-semibold text-amber-200 uppercase tracking-wider">Sobre o Indicador</span>
+        </div>
+        <div class="relative z-10 flex flex-col gap-3 text-sm text-amber-100">
+            <div class="flex items-start gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-300 flex-shrink-0 mt-1.5"></span>
+                <span>Percentual de pessoas em idade ativa sem trabalho e buscando emprego</span>
+            </div>
+            <div class="flex items-start gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-300 flex-shrink-0 mt-1.5"></span>
+                <span>PNAD Contínua — pesquisa trimestral, cobertura nacional desde 2012</span>
+            </div>
+            <div class="flex items-start gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-300 flex-shrink-0 mt-1.5"></span>
+                <span>População de referência: 14 anos ou mais de idade</span>
+            </div>
+        </div>
+        <div class="relative z-10 text-xs text-amber-300 mt-1">SIDRA Tabela 6381 · Var. 4099</div>
+    </div>
+
+    {# ── Desemprego: Card 3 — Fonte ── #}
+    <div class="relative bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 flex flex-col gap-4 hover:shadow-md transition-shadow duration-200 group sm:col-span-2 xl:col-span-1">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-sky-100 dark:bg-sky-950/50 flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4 text-sky-600 dark:text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            </div>
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Fonte dos Dados</span>
+        </div>
+        <div class="space-y-2">
+            <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
+                <span class="text-sm text-slate-700 dark:text-slate-300 font-medium">IBGE · <a href="https://apisidra.ibge.gov.br/" target="_blank" class="text-primary-600 hover:underline dark:text-primary-400">SIDRA API</a></span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-sky-500 flex-shrink-0"></span>
+                <span class="text-sm text-slate-700 dark:text-slate-300 font-medium">Frequência: trimestral</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-primary-500 flex-shrink-0"></span>
+                <span class="text-sm text-slate-700 dark:text-slate-300 font-medium">Cobertura: Brasil (nacional)</span>
+            </div>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 h-0.5 rounded-b-2xl bg-gradient-to-r from-amber-400 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+    </div>
+
+{% else %}
+
+    {# ── Default / Dashboard / Miséria: cards originais ── #}
+
+    <!-- KPI 1: Índice de Miséria -->
+    <div class="relative bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 flex flex-col gap-4 hover:shadow-md transition-shadow duration-200 group cursor-pointer"
+         id="card-miseria" onclick="toggleDataset(0)">
+        <div class="flex items-start justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-950/50 flex items-center justify-center flex-shrink-0">
                     <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
                     </svg>
                 </div>
-                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Índice de Miséria
-                </span>
+                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Índice de Miséria</span>
             </div>
-            <!-- Badge variação semântica -->
             {% if variacao|stringformat:"s"|slice:":1" == "-" %}
-                <span class="inline-flex items-center gap-1 text-xs font-bold
-                             text-emerald-700 dark:text-emerald-400
-                             bg-emerald-50 dark:bg-emerald-950/50
-                             border border-emerald-200 dark:border-emerald-800
-                             px-2 py-0.5 rounded-full"
-                      title="Variação em relação ao mês anterior">
-                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                    </svg>
+                <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full" title="Variação em relação ao mês anterior">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                     {{ variacao }}%
                 </span>
             {% else %}
-                <span class="inline-flex items-center gap-1 text-xs font-bold
-                             text-rose-700 dark:text-rose-400
-                             bg-rose-50 dark:bg-rose-950/50
-                             border border-rose-200 dark:border-rose-800
-                             px-2 py-0.5 rounded-full"
-                      title="Variação em relação ao mês anterior">
-                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                    </svg>
+                <span class="inline-flex items-center gap-1 text-xs font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 px-2 py-0.5 rounded-full" title="Variação em relação ao mês anterior">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
                     +{{ variacao }}%
                 </span>
             {% endif %}
         </div>
-
-        <!-- Valor principal -->
         <div>
-            <span class="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                {{ indice_miseria_atual }}<span class="text-xl font-semibold text-slate-400 ml-0.5">%</span>
-            </span>
-            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1.5">
-                vs mês anterior consolidado
-            </p>
+            <span class="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">{{ indice_miseria_atual }}<span class="text-xl font-semibold text-slate-400 ml-0.5">%</span></span>
+            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1.5">vs mês anterior consolidado</p>
         </div>
-
-        <!-- Faixinha de cor na base -->
-        <div class="absolute bottom-0 left-0 right-0 h-0.5 rounded-b-2xl
-                    bg-gradient-to-r from-amber-400 to-orange-500
-                    opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        </div>
+        <div class="absolute bottom-0 left-0 right-0 h-0.5 rounded-b-2xl bg-gradient-to-r from-amber-400 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
     </div>
 
-    <!-- KPI 2: Composição (IPCA + Desemprego) -->
-    <div class="relative overflow-hidden
-                bg-gradient-to-br from-primary-700 to-primary-900
-                rounded-2xl shadow-lg p-5 flex flex-col gap-4"
-         id="card-composicao">
-
-        <!-- Círculos decorativos de fundo -->
+    <!-- KPI 2: Composição -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-primary-700 to-primary-900 rounded-2xl shadow-lg p-5 flex flex-col gap-4" id="card-composicao">
         <div class="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/5"></div>
         <div class="absolute -bottom-8 -left-4 w-32 h-32 rounded-full bg-white/5"></div>
-
         <div class="relative z-10">
-            <span class="text-xs font-semibold text-primary-200 uppercase tracking-wider">
-                Composição do Índice
-            </span>
+            <span class="text-xs font-semibold text-primary-200 uppercase tracking-wider">Composição do Índice</span>
         </div>
         <div class="relative z-10 flex flex-col gap-3">
-            <!-- IPCA -->
             <div class="flex items-center justify-between cursor-pointer hover:bg-white/10 p-1.5 -mx-1.5 rounded transition-colors" onclick="toggleDataset(1)" title="Filtrar IPCA">
                 <div class="flex items-center gap-2">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></span>
@@ -113,7 +243,6 @@
                 </div>
                 <span class="text-sm font-bold text-white font-mono">12M acum.</span>
             </div>
-            <!-- Desemprego -->
             <div class="flex items-center justify-between cursor-pointer hover:bg-white/10 p-1.5 -mx-1.5 rounded transition-colors" onclick="toggleDataset(2)" title="Filtrar Desemprego">
                 <div class="flex items-center gap-2">
                     <span class="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0"></span>
@@ -122,30 +251,17 @@
                 <span class="text-sm font-bold text-white font-mono">Tri. móvel</span>
             </div>
         </div>
-        <div class="relative z-10 text-xs text-primary-300 mt-1">
-            Metodologia Okun (1962)
-        </div>
+        <div class="relative z-10 text-xs text-primary-300 mt-1">Metodologia Okun (1962)</div>
     </div>
 
-    <!-- KPI 3: Fonte dos Dados / Última Atualização -->
-    <div class="relative bg-white dark:bg-slate-900
-                rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800
-                p-5 flex flex-col gap-4 hover:shadow-md transition-shadow duration-200 group
-                sm:col-span-2 xl:col-span-1"
-         id="card-fonte">
-
+    <!-- KPI 3: Fonte dos Dados -->
+    <div class="relative bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 flex flex-col gap-4 hover:shadow-md transition-shadow duration-200 group sm:col-span-2 xl:col-span-1" id="card-fonte">
         <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-lg bg-sky-100 dark:bg-sky-950/50
-                        flex items-center justify-center flex-shrink-0">
-                <svg class="w-4 h-4 text-sky-600 dark:text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                </svg>
+            <div class="w-8 h-8 rounded-lg bg-sky-100 dark:bg-sky-950/50 flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4 text-sky-600 dark:text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
             </div>
-            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Fonte dos Dados
-            </span>
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Fonte dos Dados</span>
         </div>
-
         <div class="space-y-2">
             <div class="flex items-center gap-2">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
@@ -160,12 +276,10 @@
                 <span class="text-sm text-slate-700 dark:text-slate-300 font-medium">OpenAI · Multi-Agent RAG</span>
             </div>
         </div>
-
-        <div class="absolute bottom-0 left-0 right-0 h-0.5 rounded-b-2xl
-                    bg-gradient-to-r from-sky-400 to-primary-500
-                    opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        </div>
+        <div class="absolute bottom-0 left-0 right-0 h-0.5 rounded-b-2xl bg-gradient-to-r from-sky-400 to-primary-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
     </div>
+
+{% endif %}
 
 </div>
 <!-- /KPI CARDS -->
