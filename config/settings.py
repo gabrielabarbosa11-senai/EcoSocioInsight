@@ -84,6 +84,13 @@ USE_TZ = True
 # --- Arquivos Estáticos ---
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'presentation' / 'static']
+# STATIC_ROOT is required for collectstatic to work in production.
+# Nginx serves /static/ from this directory.
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# --- Autenticação ---
+# Redirect @login_required to the admin login page (no /accounts/login/ route exists)
+LOGIN_URL = '/admin/login/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

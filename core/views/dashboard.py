@@ -1,7 +1,12 @@
 import json
+from datetime import date
 from decimal import Decimal
 from django.shortcuts import render
 from core.models import MetricaSocioEconomica
+
+# PNAD Contínua (unemployment) starts March 2012. Filtering from this date
+# ensures the chart never shows a false 0% unemployment line for earlier periods.
+_PNAD_START = date(2012, 3, 1)
 
 def index(request):
     """
@@ -10,7 +15,8 @@ def index(request):
     """
     metricas = MetricaSocioEconomica.objects.filter(
         tipo_metrica__in=['IPCA', 'Desemprego'],
-        regiao='Brasil'
+        regiao='Brasil',
+        data__gte=_PNAD_START,
     ).order_by('data')
 
     historico = {}
@@ -25,6 +31,11 @@ def index(request):
     desemprego_data = []
     miseria_data = []
 
+    # Only months where both metrics were actually ingested are used for the KPI.
+    # PNAD (unemployment) is quarterly, so recent months may lack Desemprego data —
+    # using those would produce a falsely low Misery Index.
+    complete_miseria = []
+
     indice_miseria_atual = Decimal('0.0')
     indice_miseria_anterior = Decimal('0.0')
 
@@ -33,16 +44,19 @@ def index(request):
         ipca = historico[dt]['IPCA']
         desemp = historico[dt]['Desemprego']
         miseria = ipca + desemp
-        
+
         labels.append(dt)
         ipca_data.append(float(ipca))
         desemprego_data.append(float(desemp))
         miseria_data.append(float(miseria))
 
-    if len(miseria_data) >= 1:
-        indice_miseria_atual = miseria_data[-1]
-    if len(miseria_data) >= 2:
-        indice_miseria_anterior = miseria_data[-2]
+        if ipca > 0 and desemp > 0:
+            complete_miseria.append(float(miseria))
+
+    if len(complete_miseria) >= 1:
+        indice_miseria_atual = complete_miseria[-1]
+    if len(complete_miseria) >= 2:
+        indice_miseria_anterior = complete_miseria[-2]
 
     # Cálculo da variação
     variacao = 0

@@ -1,0 +1,134 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administração | SocioEcoInsight</title>
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50:  '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
+
+    <!-- Card -->
+    <div class="w-full max-w-sm">
+
+        <!-- Logo + branding -->
+        <div class="flex flex-col items-center mb-8">
+            <div class="w-24 h-24 rounded-2xl overflow-hidden shadow-xl shadow-black/40 mb-5 border border-white/10">
+                <img src="{% static 'img/favicon.png' %}" alt="SocioEcoInsight logo" class="w-full h-full object-cover">
+            </div>
+            <h1 class="text-2xl font-extrabold text-white tracking-tight">SocioEcoInsight</h1>
+            <p class="text-sm text-slate-400 mt-1">Painel Analítico · Área Restrita</p>
+        </div>
+
+        <!-- Login card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl shadow-black/50 p-7">
+
+            <!-- Error messages -->
+            {% if form.errors %}
+            <div class="mb-5 flex items-start gap-3 bg-red-950/60 border border-red-800/60 rounded-xl p-3.5">
+                <svg class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-sm text-red-300">
+                    Usuário ou senha incorretos. Tente novamente.
+                </p>
+            </div>
+            {% endif %}
+
+            {% if error_message %}
+            <div class="mb-5 flex items-start gap-3 bg-amber-950/60 border border-amber-800/60 rounded-xl p-3.5">
+                <svg class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-sm text-amber-300">{{ error_message }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Form -->
+            <form method="post" action="{{ app_path }}" id="login-form">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next }}">
+
+                <!-- Username -->
+                <div class="mb-4">
+                    <label for="id_username" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                        Usuário
+                    </label>
+                    <input type="text"
+                           name="username"
+                           id="id_username"
+                           autocomplete="username"
+                           autofocus
+                           required
+                           class="w-full bg-slate-800 border border-slate-700 text-white placeholder-slate-500
+                                  rounded-xl px-4 py-3 text-sm
+                                  focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-600
+                                  transition-all duration-150">
+                </div>
+
+                <!-- Password -->
+                <div class="mb-6">
+                    <label for="id_password" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                        Senha
+                    </label>
+                    <input type="password"
+                           name="password"
+                           id="id_password"
+                           autocomplete="current-password"
+                           required
+                           class="w-full bg-slate-800 border border-slate-700 text-white placeholder-slate-500
+                                  rounded-xl px-4 py-3 text-sm
+                                  focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-600
+                                  transition-all duration-150">
+                </div>
+
+                <!-- Submit -->
+                <button type="submit"
+                        class="w-full bg-primary-600 hover:bg-primary-700 active:scale-[0.98]
+                               text-white font-semibold rounded-xl px-4 py-3 text-sm
+                               transition-all duration-150 shadow-lg shadow-primary-900/40">
+                    Entrar
+                </button>
+            </form>
+        </div>
+
+        <!-- Back to dashboard link -->
+        <div class="mt-6 text-center">
+            <a href="/"
+               class="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-slate-200 transition-colors duration-150">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Voltar ao Dashboard
+            </a>
+        </div>
+
+        <!-- Footer attribution -->
+        <p class="text-center text-xs text-slate-600 mt-8">
+            SocioEcoInsight · UniSENAI MT · Dados IBGE/SIDRA
+        </p>
+    </div>
+
+</body>
+</html>
